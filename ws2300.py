@@ -29,7 +29,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import warnings; warnings.simplefilter('default')
-import cStringIO
+import io
 import datetime
 import errno
 import fcntl
@@ -50,6 +50,7 @@ import traceback
 import time
 import tty
 import serial
+from functools import reduce
 
 
 try:
@@ -77,7 +78,7 @@ DISABLE_WRITE	= False
 #
 # A fatal error.
 #
-class FatalError(StandardError):
+class FatalError(Exception):
   source =		None
   message =		None
   cause	= 		None
@@ -85,7 +86,7 @@ class FatalError(StandardError):
     self.source = source
     self.message = message
     self.cause = cause
-    StandardError.__init__(self, message)
+    Exception.__init__(self, message)
 
 #
 # For debugging.
@@ -99,7 +100,7 @@ def trace(l, *args):
   if trace_file_handle == None:
     if DEBUG_TRACE == True:
       trace_file_handle = open("/tmp/ws2300.trace", "w")
-    elif type(DEBUG_TRACE) in (type(""), type(u"")):
+    elif type(DEBUG_TRACE) in (type(""), type("")):
       trace_file_handle = open(DEBUG_TRACE, "w")
     else:
       trace_file_handle = DEBUG_TRACE
@@ -229,7 +230,7 @@ class LinuxSerialPort(SerialPort):
     #
     try:
       self.serial_port = os.open(self.device, os.O_RDWR)
-    except EnvironmentError, e:
+    except EnvironmentError as e:
       raise FatalError(self.device, "can't open tty device - %s." % str(e))
     try:
       fcntl.flock(self.serial_port, fcntl.LOCK_EX)
@@ -307,9 +308,9 @@ class Ws2300(object):
   #
   # An exception for us.
   #
-  class Ws2300Exception(StandardError):
+  class Ws2300Exception(Exception):
     def __init__(self, *args):
-      StandardError.__init__(self, *args)
+      Exception.__init__(self, *args)
   #
   # Constants we use.
   #
@@ -345,7 +346,7 @@ class Ws2300(object):
   def write_byte(self,data):
     if self.log_mode != 'w':
       if self.log_mode != 'e':
-	self.log(' ')
+        self.log(' ')
       self.log_mode = 'w'
     self.log("%02x" % ord(data))
     self.serial_port.write(data)
@@ -378,8 +379,8 @@ class Ws2300(object):
     self.log_enter("re")
     try:
       for retry in range(self.__class__.MAX_RESETS):
-	self.clear_device()
-	self.write_byte('\x06')
+        self.clear_device()
+        self.write_byte('\x06')
 	#
 	# Occasionally 0, then 2 is returned.  If 0 comes back,
 	# continue reading as this is more efficient than sending
@@ -388,14 +389,14 @@ class Ws2300(object):
 	# Read with a fast timeout until all data is exhausted, if
 	# we got a 2 back at all, we consider it a success.
 	#
-	success = False
-	answer = self.read_byte()
-	while answer != None:
-	  if answer == '\x02':
-	    success = True
-	  answer = self.read_byte(0.05)
-	if success:
-	  return
+        success = False
+        answer = self.read_byte()
+        while answer != None:
+          if answer == '\x02':
+            success = True
+          answer = self.read_byte(0.05)
+        if success:
+          return
       msg = "Reset failed, %d retries, no response" % self.__class__.MAX_RESETS
       raise self.Ws2300Exception(msg)
     finally:
@@ -410,8 +411,8 @@ class Ws2300(object):
       ack = chr(digit * 16 + (ord(byte) - 0x82) // 4)
       answer = self.read_byte()
       if ack != answer:
-	self.log("??")
-	return False
+        self.log("??")
+        return False
     return True
   #
   # Write data, checking the reply.
@@ -420,24 +421,24 @@ class Ws2300(object):
     self.log_enter("wd")
     try:
       if not self.write_address(nybble_address):
-	return None
+        return None
       if encode_constant == None:
-	encode_constant = self.WRITENIB
+        encode_constant = self.WRITENIB
       encoded_data = ''.join([
-	  chr(nybbles[i]*4 + encode_constant)
-	  for i in range(len(nybbles))])
+      chr(nybbles[i]*4 + encode_constant)
+      for i in range(len(nybbles))])
       ack_constant = {
-	    self.SETBIT:	self.SETACK,
-	    self.UNSETBIT:	self.UNSETACK,
-	    self.WRITENIB:	self.WRITEACK
-	  }[encode_constant]
+        self.SETBIT:	self.SETACK,
+        self.UNSETBIT:	self.UNSETACK,
+        self.WRITENIB:	self.WRITEACK
+      }[encode_constant]
       self.log(",")
       for i in range(len(encoded_data)):
-	self.write_byte(encoded_data[i])
-	answer = self.read_byte()
-	if chr(nybbles[i] + ack_constant) != answer:
-	  self.log("??")
-	  return None
+        self.write_byte(encoded_data[i])
+        answer = self.read_byte()
+      if chr(nybbles[i] + ack_constant) != answer:
+          self.log("??")
+          return None
       return True
     finally:
       self.log_exit()
@@ -448,10 +449,10 @@ class Ws2300(object):
     self.log_enter("ws")
     try:
       for retry in range(self.MAXRETRIES):
-	self.reset_06()
-	command_data = self.write_data(nybble_address,nybbles,encode_constant)
-	if command_data != None:
-	  return command_data
+        self.reset_06()
+        command_data = self.write_data(nybble_address,nybbles,encode_constant)
+        if command_data != None:
+            return command_data
       raise self.Ws2300Exception("write_safe failed, retries exceeded")
     finally:
       self.log_exit()
@@ -481,10 +482,10 @@ class Ws2300(object):
     self.log_enter("rd")
     try:
       if nybble_count < 1 or nybble_count > self.MAXBLOCK:
-	StatdardError("Too many nybbles requested")
+        StatdardError("Too many nybbles requested")
       bytes = (nybble_count + 1) // 2
       if not self.write_address(nybble_address):
-	return None
+        return None
       #
       # Write the number bytes we want to read.
       #
@@ -493,26 +494,26 @@ class Ws2300(object):
       answer = self.read_byte()
       check = chr(0x30 + bytes)
       if answer != check:
-	self.log("??")
-	return None
+        self.log("??")
+        return None
       #
       # Read the response.
       #
       self.log(", :")
       response = ""
       for i in range(bytes):
-	answer = self.read_byte()
-	if answer == None:
-	  return None
-	response += answer
+        answer = self.read_byte()
+        if answer == None:
+            return None
+        response += answer
       #
       # Read and verify checksum
       #
       answer = self.read_byte()
       checksum = sum([ord(b) for b in response]) % 256
       if chr(checksum) != answer:
-	self.log("??")
-	return None
+        self.log("??")
+        return None
       flatten = lambda a,b: a + (ord(b) % 16, ord(b) / 16)
       return reduce(flatten, response, ())[:nybble_count]
     finally:
@@ -528,23 +529,23 @@ class Ws2300(object):
     self.log_exit()
     try:
       if [b for b in batches if b[0] >= 0]:
-	self.reset_06()
+        self.reset_06()
       result = []
       for batch in batches:
-	address = batch[0]
-	data = ()
-	for start_pos in range(0,batch[1],self.MAXBLOCK):
-	  for retry in range(self.MAXRETRIES):
-	    bytes = min(self.MAXBLOCK, batch[1]-start_pos)
-	    response = self.read_data(address + start_pos, bytes)
-	    if response != None:
-	      break
-	    self.reset_06()
-	  if response == None:
-	    raise self.Ws2300Exception("read failed, retries exceeded")
-	  data += response
-	result.append(data)
-      return result
+        address = batch[0]
+        data = ()
+        for start_pos in range(0,batch[1],self.MAXBLOCK):
+            for retry in range(self.MAXRETRIES):
+                bytes = min(self.MAXBLOCK, batch[1]-start_pos)
+                response = self.read_data(address + start_pos, bytes)
+                if response != None:
+                    break
+            self.reset_06()
+            if response == None:
+               raise self.Ws2300Exception("read failed, retries exceeded")
+            data += response
+            result.append(data)
+            return result
     finally:
       self.log_enter("rb end")
       self.log_exit()
@@ -606,7 +607,7 @@ class SerialClient(SerialPort):
     self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
       self.soc.connect((self.host, self.port))
-    except socket.error, e:
+    except socket.error as e:
       self.close()
       raise FatalError(self.source, "Can't connect to serial port server", e)
   #
@@ -653,15 +654,15 @@ class SerialClient(SerialPort):
       self.soc.send('r %.2f\n' % timeout)
       line = self.readline()
       while '\n' in line and not line[0] == 'R':
-	line = self.readline()
+        line = self.readline()
       if line == 'R\n':
-	return None
+        return None
       bytes = int(line[1:])
       while len(self.read_buf) < bytes:
-	data = self.soc.recv(bytes - len(self.read_buf))
-	if not data:
-	  return None
-	self.read_buf += data
+        data = self.soc.recv(bytes - len(self.read_buf))
+        if not data:
+            return None
+        self.read_buf += data
     result = self.read_buf[0]
     self.read_buf = self.read_buf[1:]
     return result
@@ -702,7 +703,7 @@ class SerialServer(object):
     self.listen_soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
       self.listen_soc.bind(('', listen_port))
-    except socket.error, e:
+    except socket.error as e:
       raise FatalError(source, "Can't bind to %s" % listen_port, e)
     self.listen_soc.listen(5)
   #
@@ -727,7 +728,7 @@ class SerialServer(object):
       data = ""
       while byte != None:
         data += byte
-	byte = self.ws2300.serial_port.read_byte(0.1)
+      byte = self.ws2300.serial_port.read_byte(0.1)
       self.send(client, 'R %d\n%s' % (len(data), data))
   def cmd_w(self, client, line):
     bytes = int(line)
@@ -756,22 +757,22 @@ class SerialServer(object):
       line = ""
       char = client.recv(1)
       while not char in ('', '\n'):
-	line += char
-	char = client.recv(1)
+        line += char
+        char = client.recv(1)
       return line + char
     try:
       client = self.listen_soc.accept()[0]
       line = readline()
       while '\n' in line:
-	cmd = self.__class__.cmds.get(line[0], None)
-	if not cmd:
-	  break
-	cmd(self, client, line[1:].strip())
-	line = readline()
+        cmd = self.__class__.cmds.get(line[0], None)
+        if not cmd:
+            break
+        cmd(self, client, line[1:].strip())
+        line = readline()
     except socket.error:
       try:
-	if client:
-	  client.close()
+        if client:
+            client.close()
       except socket.error:
         pass
 
@@ -1056,7 +1057,7 @@ class WindVelocityConversion(Conversion):
 class TextConversion(Conversion):
   constants = None
   def __init__(self, constants):
-    items = constants.items()[:]
+    items = list(constants.items())[:]
     items.sort()
     fullname = ",".join([c[1]+"="+str(c[0]) for c in items]) + ",unknown-X"
     Conversion.__init__(self, "", 1, fullname)
@@ -1071,7 +1072,7 @@ class TextConversion(Conversion):
       return result
     return "unknown-%d" % value
   def parse(self, str):
-    result = [c[0] for c in self.constants.items() if c[1] == str]
+    result = [c[0] for c in list(self.constants.items()) if c[1] == str]
     if result:
       return result[0]
     return int(value[8:],16)
@@ -1093,7 +1094,7 @@ class ConversionBit(Conversion):
   def str(self, value):
     return self.desc[value]
   def parse(self, str):
-    return [c[0] for c in self.desc.items() if c[1] == str][0]
+    return [c[0] for c in list(self.desc.items()) if c[1] == str][0]
 
 class BitConversion(ConversionBit):
   def __init__(self, bit, desc):
@@ -1528,18 +1529,18 @@ class CsvDb(object):
     handle	= None	# string, the handle of the file to append to
     def __init__(self, filename):
       if not filename:
-	self.handle = sys.stdout
+        self.handle = sys.stdout
       else:
-	try:
-	  self.handle = open(filename, "a")
-	except EnvironmentError, e:
-	  raise FatalError(filename, str(e), e)
+        try:
+            self.handle = open(filename, "a")
+        except EnvironmentError as e:
+            raise FatalError(filename, str(e), e)
     def write(self, line):
       self.handle.write(line + '\n')
       self.handle.flush()
     def close(self):
       if self.handle != sys.stdout:
-	self.handle.close()
+        self.handle.close()
   #
   # Overwrite to text file with the data.
   #
@@ -1549,29 +1550,29 @@ class CsvDb(object):
       self.filename = filename
     def write(self, line):
       if not self.filename:
-	handle = sys.stdout
+        handle = sys.stdout
       else:
-	tmp_filename = self.filename + ".new"
-	try:
-	  handle = open(tmp_filename, "w")
-	except EnvironmentError, e:
-	  raise FatalError(tmp_filename, str(e), e)
+        tmp_filename = self.filename + ".new"
+        try:
+            handle = open(tmp_filename, "w")
+        except EnvironmentError as e:
+            raise FatalError(tmp_filename, str(e), e)
       handle.write(line + '\n')
       if handle != sys.stdout:
-	handle.close()
-	try:
-	  s = os.lstat(self.filename)
-	  os.chmod(tmp_filename, stat.S_IMODE(s.st_mode))
-	  try:
-	    os.chown(tmp_filename, os.geteuid(), s.st_gid);
-	    os.chown(tmp_filename, s.st_uid, s.st_gid);
-	  except EnvironmentError, e:
-            if e.errno != errno.EPERM:
-	      raise
-	except EnvironmentError, e:
-	  if e.errno != errno.ENOENT:
-	    raise
-	os.rename(tmp_filename, self.filename)
+        handle.close()
+        try:
+            s = os.lstat(self.filename)
+            os.chmod(tmp_filename, stat.S_IMODE(s.st_mode))
+            try:
+                os.chown(tmp_filename, os.geteuid(), s.st_gid);
+                os.chown(tmp_filename, s.st_uid, s.st_gid);
+            except EnvironmentError as e:
+                if e.errno != errno.EPERM:
+                    raise
+        except EnvironmentError as e:
+            if e.errno != errno.ENOENT:
+                raise
+            os.rename(tmp_filename, self.filename)
     def close(self):
       pass
   #
@@ -1659,10 +1660,10 @@ class SqlDb(object):
     try:
       self.dbmodule = __import__(toks[0])
       for module_name in toks[0].split('.')[1:]:
-	self.dbmodule = getattr(self.dbmodule, module_name)
-    except ImportError, e:
+        self.dbmodule = getattr(self.dbmodule, module_name)
+    except ImportError as e:
       raise FatalError(self.me, 'can\'t file sql module "%s".' % toks[0], e)
-    except AttributeError, e:
+    except AttributeError as e:
       raise FatalError(self.me, 'can\'t file sql module "%s".' % toks[0], e)
     params = self.__class__.KEYWORD_RE.findall(toks[1])
     self.connect_params = dict([(p[0],eval(p[1])) for p in params])
@@ -1680,7 +1681,7 @@ class SqlDb(object):
   def connect(self):
     try:
       self.reconnect()
-    except StandardError, e:
+    except Exception as e:
       raise self.error_object(e)
   #
   # Write a row of samples to the database.
@@ -1750,20 +1751,20 @@ class SqlDb(object):
     try:
       start_time = time.time()
       while True:
-	try:
-	  try:
-	    if self.cursor == None:
-	      self.reconnect()
-	    return function(self, *args)
-	  except (self.dbmodule.OperationalError,self.dbmodule.InternalError), e:
-	    if time.time() - start_time > self.__class__.RETRY_TIME:
-	      raise
-	except StandardError, e:
-	  raise self.error_object(e)
-	try:
-	  self.close()
-	except (self.dbmodule.OperationalError, self.dbmodule.InternalError), e:
-	  pass
+        try:
+          try:
+            if self.cursor == None:
+              self.reconnect()
+            return function(self, *args)
+          except (self.dbmodule.OperationalError,self.dbmodule.InternalError) as e:
+            if time.time() - start_time > self.__class__.RETRY_TIME:
+              raise
+        except Exception as e:
+          raise self.error_object(e)
+        try:
+          self.close()
+        except (self.dbmodule.OperationalError, self.dbmodule.InternalError) as e:
+          pass
     finally:
       self.call_retry = True
   #
@@ -1900,7 +1901,7 @@ class DirectionField(Field):
       counts.setdefault(v, 0)
       counts[v] += 1
     m = max(list(counts.values()))
-    return [v for v in counts.items() if v[1] == m][0]
+    return [v for v in list(counts.items()) if v[1] == m][0]
   max = property(max)
   #
   # Return the least common direction.
@@ -1913,7 +1914,7 @@ class DirectionField(Field):
       counts.setdefault(v, 0)
       counts[v] += 1
     m = min(list(counts.values()))
-    return [v for v in counts.items() if v[1] == m][0]
+    return [v for v in list(counts.items()) if v[1] == m][0]
   min = property(min)
   #
   # Return the vector average of the direction samples.
@@ -1967,7 +1968,7 @@ class VelocityField(object):
     def avg(self):
       values = self._velocity.values
       if not values:
-	return 0.0
+        return 0.0
       vavg = lambda f: sum([f(math.radians(v[1]))*v[0] for v in values]) / self.cnt
       avg_sin = vavg(math.sin)
       avg_cos = vavg(math.cos)
@@ -1988,10 +1989,10 @@ class VelocityField(object):
     def avg(self):
       values = self._velocity.values
       if not values:
-	return 0.0
+        return 0.0
       total = sum([v[0] for v in values])
       if total == 0.0:
-	return DirectionField._diravg(self)
+        return DirectionField._diravg(self)
       vavg = lambda f: sum([f(math.radians(v[1]))*v[0] for v in values]) / total
       avg_sin = vavg(math.sin)
       avg_cos = vavg(math.cos)
@@ -2021,7 +2022,7 @@ class VelocityField(object):
 # sees when he writes ws.field in his expressions.
 #
 class Recorder(object):
-  SECONDS_PER_DAY	= 24L * 60L * 60L
+  SECONDS_PER_DAY	= 24 * 60 * 60
   measureRe		= re.compile("(?:^\s*|[^\w\s.]|[^.\s]\s+)ws[.]([a-z]\w*)")
   compiled_fields	= None	# list,   the compiled fields
   db			= None	# object, the database
@@ -2052,13 +2053,13 @@ class Recorder(object):
     url = (len(args) < 2 or not args[1]) and "csv" or args[1]
     try:
       self.sample_time = (len(args) < 3 or not args[2]) and 1.0 or float(args[2])
-    except ValueError, e:
+    except ValueError as e:
       usage(source, "illegal sample time '%s'." % args[2])
     try:
       self.save_time = (len(args) < 4 or not args[3]) and 1.0 or float(args[3])
       if self.save_time < self.sample_time:
-	raise ValueError()
-    except ValueError, e:
+        raise ValueError()
+    except ValueError as e:
       usage(source, "illegal save time '%s'." % args[3])
     insert_statement = len(args) >= 5 and args[4]
     #
@@ -2074,12 +2075,12 @@ class Recorder(object):
     for tok in self.split_fields:
       match = self.__class__.measureRe.search(tok)
       if match:
-	self.add_field(source, match.group(1))
+        self.add_field(source, match.group(1))
       try:
-	expr = compile("lambda: " + tok, "", "eval")
-	expr = eval(expr, self.namespace)
+        expr = compile("lambda: " + tok, "", "eval")
+        expr = eval(expr, self.namespace)
       except SyntaxError:
-	usage(source, 'syntax error in field "%s".' % tok)
+        usage(source, 'syntax error in field "%s".' % tok)
       self.compiled_fields.append(expr)
     #
     # Connect to the data sink.
@@ -2090,7 +2091,7 @@ class Recorder(object):
     else:
       self.db = SqlDb(source, len(self.compiled_fields), url, insert_statement)
       if not insert_statement:
-	usage(source, "Insert statement required for SQL url.")
+        usage(source, "Insert statement required for SQL url.")
     self.namespace["db"] = self.db.dbmodule
     self.namespace["generator"] = self.db.generator
     self.namespace["select"] = self.db.select
@@ -2129,7 +2130,7 @@ class Recorder(object):
   #
   def recovery_init(self, last_sample):
     local_time = last_sample - time.timezone
-    round = local_time % (24L * 60L * 60L) % self.save_time
+    round = local_time % (24 * 60 * 60) % self.save_time
     self.init(last_sample - round)
   #
   # Initialise ourselves - ie, prepare to do samples and writes.
@@ -2150,7 +2151,7 @@ class Recorder(object):
     self.namespace["starttime"] = self.next_write
     self.next_sample = self.next_write
     local_now = utc_now - time.timezone
-    round = local_now % (24L * 60L * 60L) % self.save_time
+    round = local_now % (24 * 60 * 60) % self.save_time
     self.next_write = utc_now + self.save_time - round
     for field in self.fields:
       field._reset()
@@ -2178,12 +2179,12 @@ class Recorder(object):
     values = []
     for field, expr in zip(self.split_fields, self.compiled_fields):
       try:
-	value = expr()
-	values.append(expr())
-      except StandardError, e:
-	raise FatalError(source, 'error in field "%s" - %s' % (field.strip(), str(e)), e)
+        value = expr()
+        values.append(expr())
+      except Exception as e:
+        raise FatalError(source, 'error in field "%s" - %s' % (field.strip(), str(e)), e)
       if isinstance(value, (Field, VelocityField)):
-	raise FatalError(source, '"%s" is a field, not a value.' % field.strip())
+        raise FatalError(source, '"%s" is a field, not a value.' % field.strip())
     return values
   #
   # Shut down.
@@ -2209,36 +2210,36 @@ class RecoveryFile(object):
     self.samples = []
     try:
       handle = open(self.filename)
-    except EnvironmentError, e:
+    except EnvironmentError as e:
       if e.errno != errno.ENOENT:
-	FatalError(self.filename, str(e), e)
+        FatalError(self.filename, str(e), e)
       handle = None
     if handle != None:
       line_nr = 0
       try:
-	for line in handle.readlines():
-	  line_nr += 1
-	  toks = line.rstrip().split()
-	  dig = lambda h: tuple([int(d, 16) for d in h])
-	  measure = lambda field: (Measure.IDS[field[0]], dig(field[1]))
-	  measures = dict([measure(field.split('=')) for field in toks[1:]])
-	  self.samples.append((int(toks[0]), measures))
-	handle.close()
-      except EnvironmentError, e:
-	FatalError(self.filename, str(e), e)
-      except (IndexError, ValueError, KeyError), e:
-	raise FatalError(
-	  self.filename,
-	  (("Could not parse line %d.  "  % line_nr) +
-	    "This is possibly a bug.  Try deleting the line."),
-	  e)
+        for line in handle.readlines():
+          line_nr += 1
+          toks = line.rstrip().split()
+          dig = lambda h: tuple([int(d, 16) for d in h])
+          measure = lambda field: (Measure.IDS[field[0]], dig(field[1]))
+          measures = dict([measure(field.split('=')) for field in toks[1:]])
+          self.samples.append((int(toks[0]), measures))
+        handle.close()
+      except EnvironmentError as e:
+        FatalError(self.filename, str(e), e)
+      except (IndexError, ValueError, KeyError) as e:
+        raise FatalError(
+          self.filename,
+          (("Could not parse line %d.  "  % line_nr) +
+            "This is possibly a bug.  Try deleting the line."),
+          e)
     #
     # Write it.  This ensures we can can create the recovery file when put into
     # the background.
     #
     try:
       self.write()
-    except EnvironmentError, e:
+    except EnvironmentError as e:
       FatalError(self.filename, str(e), e)
   #
   # Add a new set of measures to the recovery file.
@@ -2268,7 +2269,7 @@ class RecoveryFile(object):
     handle = open(self.filename + ".new", "w")
     for line in self.samples:
       hex = lambda v: ''.join(["%x" % digit for digit in v])
-      fields = ' '.join(["%s=%s" % (k.id,hex(v)) for k,v in line[1].items()])
+      fields = ' '.join(["%s=%s" % (k.id,hex(v)) for k,v in list(line[1].items())])
       handle.write("%d %s\n" % (line[0], fields))
     handle.close()
     os.rename(self.filename + ".new", self.filename)
@@ -2314,61 +2315,61 @@ def record_weather(
       utc_now = time.time()
       time_to_sleep = wakeup - utc_now
       while time_to_sleep > 0.0:
-	trace("record: sleep=%f wakeup=%s\n" % (time_to_sleep, pt(wakeup)))
+        trace("record: sleep=%f wakeup=%s\n" % (time_to_sleep, pt(wakeup)))
         if not serial_server:
-	  time.sleep(time_to_sleep)
-	else:
-	  serial_server.run(time_to_sleep)
-	utc_now = max(time.time(), wakeup)
-	time_to_sleep = wakeup - utc_now
+          time.sleep(time_to_sleep)
+        else:
+          serial_server.run(time_to_sleep)
+        utc_now = max(time.time(), wakeup)
+        time_to_sleep = wakeup - utc_now
       #
       # Write all data scheduled for now.
       #
       if writes_ready:
-	trace("record: writes=%s\n" % repr([r.id for r in writes_ready]))
-	for recorder in writes_ready:
-	  recorder.write(source, utc_now)
-	  if recovery_file:
-	    oldest_write = min([recorder.last_write for recorder in recorders])
-	    recovery_file.purge(oldest_write)
-	if once_only:
-	  break
+        trace("record: writes=%s\n" % repr([r.id for r in writes_ready]))
+        for recorder in writes_ready:
+          recorder.write(source, utc_now)
+          if recovery_file:
+            oldest_write = min([recorder.last_write for recorder in recorders])
+            recovery_file.purge(oldest_write)
+        if once_only:
+          break
 
       #
       # Read any samples scheduled for now.
       #
       if samples_ready:
-	trace("record: samples=%s\n" % repr([r.id for r in samples_ready]))
-	measure_list = {}
-	for recorder in samples_ready:
-	  measure_list.update(recorder.measures)
-	for retries in range(5):
-	  samples = read_measurements(ws2300, measure_list.keys())
-	  measures = dict(zip(measure_list.keys(), samples))
-	  got_garbage = [m.id for m,v in measures.items() if m.conv.garbage(v)]
-	  if not got_garbage:
-	    break
-	  trace(
-	    "record: GARBAGE=%s %s\n" % (
-	    repr(got_garbage),
-	    " ".join(["%s=%s" % (m.id, str(m.conv.binary2value(v))) for m,v in measures.items()])))
-	trace(
-	    "record: %s\n" %
-	    " ".join(["%s=%s" % (m.id, str(m.conv.binary2value(v))) for m,v in measures.items()]))
-	for recorder in samples_ready:
-	  recorder.sample(measures, utc_now)
-	if recovery_file:
-	  recovery_file.add_sample(utc_now, measures)
-	  recovery_file.write()
+        trace("record: samples=%s\n" % repr([r.id for r in samples_ready]))
+        measure_list = {}
+        for recorder in samples_ready:
+          measure_list.update(recorder.measures)
+        for retries in range(5):
+          samples = read_measurements(ws2300, list(measure_list.keys()))
+          measures = dict(list(zip(list(measure_list.keys()), samples)))
+          got_garbage = [m.id for m,v in list(measures.items()) if m.conv.garbage(v)]
+          if not got_garbage:
+            break
+          trace(
+            "record: GARBAGE=%s %s\n" % (
+            repr(got_garbage),
+            " ".join(["%s=%s" % (m.id, str(m.conv.binary2value(v))) for m,v in list(measures.items())])))
+        trace(
+            "record: %s\n" %
+            " ".join(["%s=%s" % (m.id, str(m.conv.binary2value(v))) for m,v in list(measures.items())]))
+        for recorder in samples_ready:
+          recorder.sample(measures, utc_now)
+        if recovery_file:
+          recovery_file.add_sample(utc_now, measures)
+          recovery_file.write()
   finally:
     exc_info = None
     for recorder in recorders:
       try:
-	recorder.close()
+        recorder.close()
       except:
-	exc_info = sys.exc_info()
+        exc_info = sys.exc_info()
     if exc_info:
-      raise exc_info[0], exc_info[1], exc_info[2]
+      raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
 
 #
 # Initialise recorders, recovering anything recorded in the recovery file.
@@ -2390,27 +2391,27 @@ def initialise_recorders(source, ws2300, recorders, recovery_file=None):
     saved_samples = recovery_file.get_samples()
     if saved_samples:
       for recorder in recorders:
-	recorder.recovery_init(saved_samples[0][0])
+        recorder.recovery_init(saved_samples[0][0])
     current_samples = {}
     for sample_time, sample_measures in saved_samples:
       samples_ready = [
-	recorder for recorder in recorders
-	if recorder.next_sample <= sample_time]
+        recorder for recorder in recorders
+        if recorder.next_sample <= sample_time]
       measures_required = {}
       for recorder in samples_ready:
-	measures_required.update(recorder.measures)
+        measures_required.update(recorder.measures)
       measures = {}
       measures.update(current_samples)
       measures.update(sample_measures)
       missing_measures = [id for id in measures_required if not id in measures]
       if missing_measures:
-	missing_samples = read_measurements(ws2300, missing_measures)
-	missing_samples = dict(zip(missing_measures, missing_samples))
-	measures.update(missing_samples)
-	current_samples.update(missing_samples)
+        missing_samples = read_measurements(ws2300, missing_measures)
+        missing_samples = dict(list(zip(missing_measures, missing_samples)))
+        measures.update(missing_samples)
+        current_samples.update(missing_samples)
       for recorder in samples_ready:
-	recorder.sample(measures, sample_time)
-	recorders_updated[recorder] = True
+        recorder.sample(measures, sample_time)
+        recorders_updated[recorder] = True
   #
   # Write all recorders whose save_time has expired between when the
   # last sample was taken and now, and ensure every recorder is
@@ -2443,7 +2444,7 @@ def usage(me, message=None):
 # Print help for the measurements.
 #
 def measurements_help():
-  measurements = Measure.IDS.values()
+  measurements = list(Measure.IDS.values())
   measurements.sort(lambda a,b: cmp(a.id, b.id))
   maxwidth = max([len(m.name) for m in measurements] + [0])
   for m in measurements:
@@ -2471,7 +2472,7 @@ def measurements_help():
 def parse_record_file(filename):
   try:
     handle = open(filename)
-  except EnvironmentError, e:
+  except EnvironmentError as e:
     sys.stderr.write("Can't open " + filename + ": " + str(e))
     sys.exit(1)
   try:
@@ -2479,14 +2480,14 @@ def parse_record_file(filename):
     recorder = []
     for line in handle.readlines():
       if not line.strip()[:1] in ("", "#"):
-	l = line.rstrip("\r\n")
-	if recorder and line.lstrip() != line:
-	  recorder[-1] += l
-	else:
-	  recorder.append(l)
+        l = line.rstrip("\r\n")
+        if recorder and line.lstrip() != line:
+          recorder[-1] += l
+        else:
+          recorder.append(l)
       elif recorder:
-	result.append(recorder)
-	recorder = []
+        result.append(recorder)
+        recorder = []
     if recorder:
       result.append(recorder)
       recorder = []
@@ -2519,7 +2520,7 @@ def parse_measure(me, measure):
       length = None
     else:
       length = int(toks[1])
-  except Exception, e:
+  except Exception as e:
     pass
   if address != None:
     if length == -1:
@@ -2537,12 +2538,12 @@ def parse_measure(me, measure):
       recno_start = int(toks[0])
       if len(toks) == 2:
         recno_end = int(toks[1])
-    except ValueError, e:
+    except ValueError as e:
       recno_start = HistoryMeasure.MAX_HISTORY_RECORDS
   elif measure.startswith("h") and len(measure) == 4:
     try:
       recno_start = int(measure[1:])
-    except ValueError, e:
+    except ValueError as e:
       recno_start = HistoryMeasure.MAX_HISTORY_RECORDS
   if recno_start != None:
     if recno_end == None:
@@ -2569,23 +2570,23 @@ def parse_measurements(me, args):
     operation = arg.split("=",1)
     for measure in parse_measure(me, operation[0]):
       if len(operation) == 1:
-	if measure.conv.nybble_count == None:
-	  usage(me, "No length given for '%s'." % operation)
-	read_requests.append(measure)
+        if measure.conv.nybble_count == None:
+          usage(me, "No length given for '%s'." % operation)
+        read_requests.append(measure)
       else:
-	if measure.address < 0:
-	  usage(me, "Can't modify measure '%s'." % operation[0])
-	elif operation[1] == "reset":
-	  if measure.reset == None:
-	    usage(me, "I don't know how to reset measure '%s'." % operation[0])
-	  data = None
-	else:
-	  try:
-	    data = measure.conv.value2binary(measure.conv.parse(operation[1]))
-	  except StandardError:
-	    raise
-	    usage(me, "'%s' does parse as a %s." % (operation[1], measure.name))
-	write_requests.append((measure, data))
+        if measure.address < 0:
+          usage(me, "Can't modify measure '%s'." % operation[0])
+        elif operation[1] == "reset":
+          if measure.reset == None:
+            usage(me, "I don't know how to reset measure '%s'." % operation[0])
+          data = None
+        else:
+          try:
+            data = measure.conv.value2binary(measure.conv.parse(operation[1]))
+          except Exception:
+            raise
+            usage(me, "'%s' does parse as a %s." % (operation[1], measure.name))
+        write_requests.append((measure, data))
   return read_requests, write_requests
 
 #
@@ -2724,7 +2725,7 @@ def demonise(me, pid_file):
   else:
     try:
       pid_handle = open(pid_file, "w")
-    except EnvironmentError, e:
+    except EnvironmentError as e:
       raise FatalErro(me, str(e), e)
   pid = os.fork()
   if pid != 0:
@@ -2740,7 +2741,7 @@ def demonise(me, pid_file):
     os.setsid()
   except AttributeError:
     pass
-  except EnvironmentError, e:
+  except EnvironmentError as e:
     if e.errno != errno.EPERM:
       raise
   #
@@ -2844,7 +2845,7 @@ def record_daemon(
   if email in ('', '-', None):
     class exception: pass
   else:
-    exception = StandardError
+    exception = Exception
   #
   # Run the daemon.
   #
@@ -2856,7 +2857,7 @@ def record_daemon(
         filename, ws2300, recorders,
 	once_only=False, serial_server=serial_server, recovery_file=recovery_file)
     except exception:
-      string_file = cStringIO.StringIO()
+      string_file = io.StringIO()
       exc = sys.exc_info()
       traceback.print_exception(exc[0], exc[1], exc[2], None, string_file)
       backtrace = ["  "+l for l in string_file.getvalue().splitlines()]
@@ -2866,19 +2867,19 @@ def record_daemon(
 	  ""
 	]
       try:
-	email_fatal(me, email, the_story + backtrace)
+        email_fatal(me, email, the_story + backtrace)
       except:
-	traceback.print_exc()
+        traceback.print_exc()
       raise
   finally:
     if isinstance(sys.stdout, SyslogFile):
       sys.stdout.write("Daemon Stopped.\n")
     if pid_filename != None:
       try:
-	os.unlink(pid_filename)
-      except EnvironmentError, e:
+        unlink(pid_filename)
+      except EnvironmentError as e:
         if e.errno != errno.ENOENT:
-	  raise
+            raise
 
 #
 # Our entry point.
@@ -2918,31 +2919,31 @@ def main(argv):
       backgroundExit = False
       ws2300 = Ws2300(serialPort)
       if argv[2] == "display":
-	recorders = [Recorder(me, "0", argv[3:])]
-	initialise_recorders(me, ws2300, recorders)
-	record_weather(me, ws2300, recorders, True)
+        recorders = [Recorder(me, "0", argv[3:])]
+        initialise_recorders(me, ws2300, recorders)
+        record_weather(me, ws2300, recorders, True)
       elif argv[2] == "record":
-	if len(argv) < 4 or len(argv) > 8:
-	  usage(me, "Wrong number of arguments.")
-	record_daemon(me, ws2300, *argv[3:])
+        if len(argv) < 4 or len(argv) > 8:
+          usage(me, "Wrong number of arguments.")
+        record_daemon(me, ws2300, *argv[3:])
       else:
-	process_measurements(me, ws2300, argv[2:])
+        process_measurements(me, ws2300, argv[2:])
     except BackgroundExit:
       backgroundExit = True
       sys.exit(0)
-    except FatalError, e:
+    except FatalError as e:
       sys.stderr.write("%s: %s\n" % (os.path.basename(e.source), e.message))
       sys.exit(1)
   finally:
     if not backgroundExit:
       if serialPort != None:
-	serialPort.close()
+        serialPort.close()
       #
       # Write the serialPort log.
       #
       if DEBUG_SERIAL:
-	for line in ws2300.log_buffer:
-	  sys.stdout.write(line + "\n")
+        for line in ws2300.log_buffer:
+          sys.stdout.write(line + "\n")
 
 if __name__ == "__main__":
   main(sys.argv)

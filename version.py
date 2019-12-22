@@ -9,12 +9,11 @@
 
 import sys
 import struct
-import ConfigParser
+import configparser
 import os
 import ftplib
-import Image
-import ImageFont, ImageDraw, ImageOps
-import urllib2
+from PIL import Image, ImageFont, ImageDraw, ImageOps
+import urllib.request, urllib.error, urllib.parse
 import time
 
 class Version(object):
@@ -50,6 +49,6 @@ class Version(object):
  
 if __name__ == '__main__':
     v = Version("VERSION")
-    print v.getVersion() 
+    print(v.getVersion()) 
     v.incBuild()
-    print v.getVersion() 
+    print(v.getVersion()) 

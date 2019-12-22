@@ -12,13 +12,12 @@ import globalvars
 from  TTLib import *
 import sys
 import struct
-import ConfigParser
+import configparser
 import sqlite3
 import os
 import ftplib
-import Image
-import ImageFont, ImageDraw, ImageOps
-import urllib2
+from PIL import Image, ImageFont, ImageDraw, ImageOps
+import urllib.request, urllib.error, urllib.parse
 import time
 import datetime
 
@@ -26,86 +25,86 @@ def str2bool(v):
 	return str(v).lower() in ("yes", "true", "t", "1")
 
 def log(message) :
-	print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+	print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 def systemRestart():
 	if os.name != 'nt':
 		log("Rebooting system ..")
 		os.system("sudo reboot")
 	else:
-		print " Sorry, cannot reboot Windows"
+		print(" Sorry, cannot reboot Windows")
 
-class myConfigParser(ConfigParser.SafeConfigParser):
+class myConfigParser(configparser.ConfigParser):
 	"""Class extendig  ConfigParser."""
 
 	def __init__(self,verbose=False):
 		self.verbose = verbose
-		ConfigParser.SafeConfigParser.__init__(self)
+		configparser.ConfigParser.__init__(self)
 
 
 	def setboolean(self,section, option,value):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
 		if str2bool(value):
-			ConfigParser.SafeConfigParser.set(self,section, option,"True")
+			configparser.ConfigParser.set(self,section, option,"True")
 		else:
-			ConfigParser.SafeConfigParser.set(self,section, option,"False")
+			configparser.ConfigParser.set(self,section, option,"False")
 
 	def setstr(self,section, option,value):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
-		ConfigParser.SafeConfigParser.set(self,section, option,value)	
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
+		configparser.ConfigParser.set(self,section, option,value)	
 
 	def setint(self,section, option,value):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
-		ConfigParser.SafeConfigParser.set(self,section, option,str(value))		
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
+		configparser.ConfigParser.set(self,section, option,str(value))		
 
 	def setfloat(self,section, option,value):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
-		ConfigParser.SafeConfigParser.set(self,section, option,str(value))	
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
+		configparser.ConfigParser.set(self,section, option,str(value))	
 
 	def get(self,section, option,default="None"):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
 		try:
-			ret = ConfigParser.SafeConfigParser.get(self,section, option)
-			if ( self.verbose ): print "Config : " + section + "-" + option + " : " +  ret
+			ret = configparser.ConfigParser.get(self,section, option)
+			if ( self.verbose ): print("Config : " + section + "-" + option + " : " +  ret)
 			return ret
 		except:
-			ConfigParser.SafeConfigParser.set(self,section, option,default)
-			if ( self.verbose ): print "Config : " + section + "-" + option + " : " +  default
+			configparser.ConfigParser.set(self,section, option,default)
+			if ( self.verbose ): print("Config : " + section + "-" + option + " : " +  default)
 			return default
 
 	def getboolean(self,section, option,default=False):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
 			
 		try:
-			return ConfigParser.SafeConfigParser.getboolean(self,section, option)
+			return configparser.ConfigParser.getboolean(self,section, option)
 		except:
-			ConfigParser.SafeConfigParser.set(self,section, option,str(default))
+			configparser.ConfigParser.set(self,section, option,str(default))
 			return default
 		
 	def getint(self,section, option,default=0):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
 			
 		try:
-			return ConfigParser.SafeConfigParser.getint(self,section, option)
+			return configparser.ConfigParser.getint(self,section, option)
 		except:
-			ConfigParser.SafeConfigParser.set(self,section, option,str(default))
+			configparser.ConfigParser.set(self,section, option,str(default))
 			return default
 			
 	def getfloat(self,section, option,default=0):
-		if ( not ConfigParser.SafeConfigParser.has_section(self,section) ):
-			ConfigParser.SafeConfigParser.add_section(self,section)
+		if ( not configparser.ConfigParser.has_section(self,section) ):
+			configparser.ConfigParser.add_section(self,section)
 			
 		try:
-			return ConfigParser.SafeConfigParser.getfloat(self,section, option)
+			return configparser.ConfigParser.getfloat(self,section, option)
 		except:
-			ConfigParser.SafeConfigParser.set(self,section, option,str(default))
+			configparser.ConfigParser.set(self,section, option,str(default))
 			return default
 
 
@@ -357,12 +356,10 @@ class config(object):
 		self.LayColorBBC = config.get('LayOut', 'LayColorBBC',"FF99FF")
 		self.LayColorBTC = config.get('LayOut', 'LayColorBTC',"0000FF")
 		
-		
-		
- 		if ( not os.path.isfile(self.cfgName)  ):
-	 		f = open(self.cfgName,"w")
- 			config.write(f)		
- 			f.close()			
+		if(not os.path.isfile(self.cfgName)):
+			f = open(self.cfgName,"w")
+			config.write(f)
+			f.close()			
 
 
 	def writeCfg(self):
@@ -594,7 +591,7 @@ class config(object):
 
 	def setWebCamInterval(self,newWebCamInterval):
 		self.WebCamInterval = int(newWebCamInterval)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('WebCam', 'webcaminterval',str(self.WebCamInterval))
 		f = open(self.cfgName,"w")
@@ -602,7 +599,7 @@ class config(object):
 		
 	def setLoRa_power(self,newLoRa_power):
 		self.LoRa_power = int(newLoRa_power)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('LoRa', 'LoRa_power',str(self.LoRa_power))
 		f = open(self.cfgName,"w")
@@ -610,7 +607,7 @@ class config(object):
 		
 	def setLoRa_BW(self,newLoRa_BW):
 		self.LoRa_BW = str(newLoRa_BW)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('LoRa', 'LoRa_BW',str(self.LoRa_BW))
 		f = open(self.cfgName,"w")
@@ -618,7 +615,7 @@ class config(object):
 		
 	def setLoRa_CR(self,newLoRa_CR):
 		self.LoRa_CR = str(newLoRa_CR)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('LoRa', 'LoRa_CR',str(self.LoRa_CR))
 		f = open(self.cfgName,"w")
@@ -626,7 +623,7 @@ class config(object):
 		
 	def setLoRa_SF(self,newLoRa_SF):
 		self.LoRa_SF = str(newLoRa_SF)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('LoRa', 'LoRa_SF',str(self.LoRa_SF))
 		f = open(self.cfgName,"w")
@@ -634,7 +631,7 @@ class config(object):
 
 	def setAlwaysOnInternet(self,AlwaysOnInternet):
 		self.AlwaysOnInternet = AlwaysOnInternet
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('Dongle', 'alwaysoninternet',AlwaysOnInternet)
 		f = open(self.cfgName,"w")
@@ -655,7 +652,7 @@ class config(object):
 				log("ERORR - bad formatted time")
 				return
 		self.shutdown_at = strTime
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('General', 'shutdown_at',strTime)
 		f = open(self.cfgName,"w")
@@ -665,7 +662,7 @@ class config(object):
 		
 	def setDataLogging(self,LogData):
 		self.logdata = LogData
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('DataLogging', 'LogData',LogData)
 		f = open(self.cfgName,"w")
@@ -710,7 +707,7 @@ class config(object):
 		
 	def setDataUpload(self,uploadData):
 		self.upload_data = uploadData
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('Upload', 'upload_data',uploadData)
 		f = open(self.cfgName,"w")
@@ -718,7 +715,7 @@ class config(object):
 
 	def setUseDongleNet(self,UseDongleNet):
 		self.UseDongleNet = UseDongleNet
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('Dongle', 'UseDongleNet',UseDongleNet)
 		f = open(self.cfgName,"w")
@@ -726,7 +723,7 @@ class config(object):
 		
 	def setWindSpeed_offset(self,windspeed_offset):
 		self.windspeed_offset = float(windspeed_offset)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('Sensors', 'windspeed_offset',str(self.windspeed_offset))
 		f = open(self.cfgName,"w")
@@ -734,7 +731,7 @@ class config(object):
 		
 	def setWindSpeed_gain(self,windspeed_gain):
 		self.windspeed_gain = float(windspeed_gain)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('Sensors', 'windspeed_gain',str(self.windspeed_gain))
 		f = open(self.cfgName,"w")
@@ -742,7 +739,7 @@ class config(object):
 
 	def setIPCamInterval(self,newIPCamInterval):
 		self.IPCamInterval = int(newIPCamInterval)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		config.set('IPCam', 'ipcaminterval',str(self.IPCamInterval))
 		f = open(self.cfgName,"w")
@@ -750,7 +747,7 @@ class config(object):
 		
 	def setCamera_resolution(self,newres):
 		ires = int(newres)
-		config = ConfigParser.SafeConfigParser()
+		config = configparser.ConfigParser()
 		config.read(self.cfgName)
 		if (ires == 0 ):
 			self.cameradivicefinalresolution = "640x480"

@@ -32,7 +32,7 @@ import struct
 
 
 logFile = datetime.datetime.now().strftime("log/davis_%d%m%Y.log")
-logging.basicConfig(filename=logFile,filemode='wa',level=logging.DEBUG)
+#logging.basicConfig(filename=logFile,filemode='wa',level=logging.DEBUG)
 # logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 
 def get_wind_dir_text():
@@ -100,7 +100,7 @@ class Sensor_VantagePro2(sensor.Sensor):
                 self._wakeup()
                 self._cmd( 'LOOP', self.loops)       
 
-                for x in xrange(self.loops):
+                for x in range(self.loops):
                     raw = self._port.read( _LoopStruct.size ) # read data
                     self.logger.debug('read: ' + raw.encode('hex'))
 
@@ -167,7 +167,7 @@ class Sensor_VantagePro2(sensor.Sensor):
                             raise Exception("CRC error")
                 time.sleep(2)
 
-            except Exception, e:
+            except Exception as e:
                 self.logger.error(e)
                 time.sleep(self.loops * 2)
             finally:
@@ -185,7 +185,7 @@ class Sensor_VantagePro2(sensor.Sensor):
         issue wakeup command to device to take out of standby mode.
         '''
         self.logger.debug("send: WAKEUP")
-        for i in xrange(3):
+        for i in range(3):
             self._port.write('\n')                    # wakeup device
             ack = self._port.read(len(self.WAKE_ACK)) # read wakeup string
             self.logger.debug('read: ' + ack.encode('hex'))
@@ -204,7 +204,7 @@ class Sensor_VantagePro2(sensor.Sensor):
         if args:
             cmd = "%s %s" % (cmd, ' '.join(str(a) for a in args))
         self.logger.debug('send: ' + cmd)
-        for i in xrange(3):
+        for i in range(3):
             self._port.write( cmd + '\n')
             if ok:
                 ack = self._port.read(len(self.OK))  # read OK
@@ -304,7 +304,7 @@ class myStruct( struct.Struct ):
         See `struct.Struct` class defintion.
     '''
     def __init__(self, fmt, order='@'):
-        self.fields, fmt_t = zip(*fmt)
+        self.fields, fmt_t = list(zip(*fmt))
         fmt_s = order + ''.join(fmt_t)
         super(myStruct,self).__init__( fmt_s )
 
@@ -321,7 +321,7 @@ class myStruct( struct.Struct ):
         fields can be post-processed by extending the _post_unpack() method.
         '''
         data = super(myStruct,self).unpack_from( buf, offset)
-        items = dict(zip(self.fields,data))
+        items = dict(list(zip(self.fields,data)))
         return self._post_unpack(items)
 
 
@@ -396,7 +396,7 @@ class LoopStruct( myStruct ):
             items['RainYear'] = items['RainYear'] / 5.0
         # Rain / US version => each bucket tip ~ 0.01 inches. Conversion to mm needed.
         elif self.rain_bucket == 'us': 
-	    tems['WindSpeed'] = units.MphToMps(items['WindSpeed'])
+            tems['WindSpeed'] = units.MphToMps(items['WindSpeed'])
             items['WindSpeed10Min'] = units.MphToMps(items['WindSpeed10Min'])         
             items['RainRate'] = units.InToMm(items['RainRate'] / 100.0)
             items['RainStorm'] = units.InToMm(items['RainStorm'] / 100.0)

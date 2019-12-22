@@ -38,7 +38,7 @@ class PluginLoader():
             
 if __name__ == '__main__':
 
-    print "starting"
+    print("starting")
     
     configfile = 'swpi.cfg'
     cfg = config.config(configfile)

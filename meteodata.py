@@ -473,15 +473,15 @@ if __name__ == '__main__':
     if ( len(data) == 1):
         therain = (data[0][9])    
         mt.rain_rate_24h = therain
-        print  mt.rain_rate_24h
-    else : print " nodara"
+        print(mt.rain_rate_24h)
+    else : print(" nodara")
     dbCursor.execute("SELECT * FROM METEO where datetime(TIMESTAMP_LOCAL) > datetime('now','-1 hour','localtime') order by rowid asc limit 1")
     data = dbCursor.fetchall()
     if ( len(data) == 1):
         therain = (data[0][9])    
         mt.rain_rate_1h = therain  
-        print  mt.rain_rate_1h
-    else : print " nodara" 
+        print(mt.rain_rate_1h)
+    else : print(" nodara") 
     if conn:        
         conn.close()
 #        except:

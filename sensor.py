@@ -32,7 +32,7 @@ current_milli_time = lambda: int(round(time.time() * 1000))
 
 
 def log(message) :
-	print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+	print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 class Sensor(threading.Thread):
 	
@@ -462,6 +462,6 @@ class Sensor(threading.Thread):
 			globalvars.meteo_data.status = 0
 			globalvars.meteo_data.last_measure_time = datetime.datetime.now()
 			globalvars.meteo_data.idx = globalvars.meteo_data.last_measure_time 
-			print "_logData1"
+			print("_logData1")
 			super().GetData()				  
  

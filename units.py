@@ -120,13 +120,13 @@ class Converter(object):
     
     def convert(self, measure, value):        
         raw_measure = re.split("[0-9]|int", measure)[0] # strip trailing numbers
-        if not self.units.has_key(raw_measure): 
+        if raw_measure not in self.units: 
             return value
         return convert(raw_measure, value, self.units[raw_measure])            
 
     def convert_back(self, measure, value):        
         raw_measure = re.split("[0-9]|int", measure)[0] # strip trailing numbers
-        if not self.units.has_key(raw_measure): 
+        if raw_measure not in self.units: 
             return value
         return convert(raw_measure, value, None, self.units[raw_measure])      
     
@@ -144,7 +144,7 @@ class Converter(object):
 
 def unit_roll(measure, unit):
     """Gives the next unit alternative, wrapping"""
-    k=conversions[measure].keys()
+    k=list(conversions[measure].keys())
     i = k.index(unit)
     if i==len(k)-1:
         return k[0]
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     
     c = Converter( target )
     
-    print c.temp(20)
-    print c.wind(1)
-    print c.rain(254)
-    print c.press(1000)
+    print(c.temp(20))
+    print(c.wind(1))
+    print(c.rain(254))
+    print(c.press(1000))

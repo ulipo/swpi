@@ -13,12 +13,12 @@ import string
 import globalvars
 import os
 import version
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import tarfile
 
 def swpi_update():
     url = ' http://www.vololiberomontecucco.it/swpi/swpi-src.tar.gz'
-    urllib.urlretrieve(url,filename='swpi-src.tar.gz')
+    urllib.request.urlretrieve(url,filename='swpi-src.tar.gz')
     t = tarfile.open('swpi-src.tar.gz', 'r:gz')
     t.extractall('../')  
     os.remove("swpi-src.tar.gz")
@@ -63,7 +63,7 @@ html2 = """</body>
 
 so = Session()
 if not hasattr(so,'loggedin'):
-    raise HTTP_REDIRECTION,"index.html"
+    raise HTTP_REDIRECTION("index.html")
 
 old_version = version.Version("./VERSION").getVersion()
 
@@ -71,12 +71,12 @@ swpi_update()
 
 new_version = version.Version("./VERSION").getVersion()
 
-print html1
+print(html1)
 if (old_version == new_version ):
     message = "system is already up to date. Current version is %s <br>" % new_version
 else:
     message = 'System updated from version %s to version %s . A system reboot is needed to activate the new version<br> <input id="Reboot" type="button" value="Reboot" onclick="return Reboot_onclick()" />'  %(old_version,new_version)
     
-print message
+print(message)
 
-print html2
+print(html2)

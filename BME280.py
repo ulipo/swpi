@@ -172,7 +172,7 @@ if __name__ == '__main__':
 			pressure = 0;			
 		if ( humidity == None ):
 			humidity = 0;
-		print "Temperature: %.2f C" % temp + "Pressure:    %.2f hPa" % (pressure / 100.0) + "Hum:    %.2f " % (humidity)
+		print("Temperature: %.2f C" % temp + "Pressure:    %.2f hPa" % (pressure / 100.0) + "Hum:    %.2f " % (humidity))
 		time.sleep(0.1)
 
 

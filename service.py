@@ -70,7 +70,7 @@ class SunHalter(threading.Thread):
             while (  not globalvars.TimeSetFromNTP ) :
                 time.sleep(60)
         if ( self.cfg.shutdown_hour_before_sunset.upper() != "NONE" ):
-            s=sun.sun(lat=self.cfg.location_latitude,long=self.cfg.location_longitude)
+            s=sun.sun(lat=self.cfg.location_latitude,int=self.cfg.location_longitude)
             sh = float(self.cfg.shutdown_hour_before_sunset)
             h = math.floor(sh)
             m = math.floor( ( sh-h) * 60 )
@@ -160,5 +160,5 @@ if __name__ == '__main__':
 #    t_SunHalt = threading.Timer(30, self.prova())
 #    t_SunHalt.start()
           
-    print "Started"
+    print("Started")
 

@@ -23,7 +23,7 @@ import meteodata
 import sensor_thread
 import sensor 
 import TTLib
-import thread
+import _thread
 from ctypes import *
 
 def get_wind_dir_text():

@@ -27,7 +27,7 @@ import sensor
 from TTLib import *
 
 def log(message) :
-    print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+    print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 class Sensor_WH1080(sensor.Sensor):
     
@@ -45,7 +45,7 @@ class Sensor_WH1080(sensor.Sensor):
             
         try:    
             self.ws = WeatherStation.weather_station()
-        except IOError,e:
+        except IOError as e:
             log("Error initializining ws")       
 
 
@@ -194,7 +194,7 @@ class Sensor_WH1080(sensor.Sensor):
                         self.error = False
                     
             
-            except IOError,e:
+            except IOError as e:
                 #raise
                 log("ERROR with PCE-FWS20  %s . Will retry ..."  % e)
     #            ret,self.model,self.idd,self.bus = self.Detect()

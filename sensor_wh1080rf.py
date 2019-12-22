@@ -25,7 +25,7 @@ import sensor_thread
 import sensor 
 import RPi.GPIO as GPIO
 import TTLib
-import thread
+import _thread
 import os
 
 DEBUG = False
@@ -33,7 +33,7 @@ DEBUG = False
 
 
 def log(message) :
-	print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+	print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 def modification_date(filename):
 	try:
@@ -132,7 +132,7 @@ class Sensor_WH1080RF(sensor.Sensor):
 			rain = float(text[3].split(",")[1])
 			return station_id,temp,hum,Wind_speed,Gust_Speed,dir_code,dire,rain
 		except:
-			if DEBUG: print "DEBUG - Error in ReadData"
+			if DEBUG: print("DEBUG - Error in ReadData")
 			return "None",0,0,0,0,"",0,0
 
 	def GetData(self):
@@ -140,7 +140,7 @@ class Sensor_WH1080RF(sensor.Sensor):
 		# get first good data
 		good_data = False
 		while ( not os.path.exists('./wh1080_rf.txt')  ):
-			if DEBUG: print "DEBUG - not exist ./wh1080_rf.txt "
+			if DEBUG: print("DEBUG - not exist ./wh1080_rf.txt ")
 			time.sleep(5)
 		while ( not good_data ):
 			station_id,temp,hum,Wind_speed,Gust_Speed,dir_code,dire,rain =  self.ReadData()
@@ -171,7 +171,7 @@ class Sensor_WH1080RF(sensor.Sensor):
 			
 			
 			tosleep = 50-(datetime.datetime.now()-last_data_time).seconds
-			if DEBUG: print "Sleeping  ", tosleep
+			if DEBUG: print("Sleeping  ", tosleep)
 			if (tosleep > 0 and tosleep < 50 ):	
 				time.sleep(tosleep)
 			else:

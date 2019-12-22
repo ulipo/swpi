@@ -21,7 +21,7 @@ class sun:
  """
  def __init__(self,lat=52.37,long=4.90): # default Amsterdam
   self.lat=lat
-  self.long=long
+  self.long=int
  
  def daylight(self):
      sunset = self.sunset()
@@ -135,8 +135,8 @@ class sun:
   self.sunset_t   =self.solarnoon_t+hourangle*4/1440
 
 if __name__ == "__main__":
- s=sun(lat=43.351983,long=12.743187)
- print(datetime.today())
- print(s.sunrise(),s.solarnoon(),s.sunset())
+ s=sun(lat=43.351983,int=12.743187)
+ print((datetime.today()))
+ print((s.sunrise(),s.solarnoon(),s.sunset()))
  
- print s.daylight()
+ print(s.daylight())

@@ -9,9 +9,7 @@
 """Classes and methods for handling Web and Cam commands."""
 
 import sqlite3
-import Image
-import ImageFont
-import ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 import time
 import os
 from TTLib  import *
@@ -43,7 +41,7 @@ class webcam(object):
 			log( "ERROR Only 2 webcams are allowed in this version of the software"	)
 			
 		self.cfg = cfg
-		self.god=sun.sun(lat=cfg.location_latitude,long=cfg.location_longitude)
+		self.god=sun.sun(lat=cfg.location_latitude,int=cfg.location_longitude)
 
 	# Old function
 

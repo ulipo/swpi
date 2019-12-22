@@ -17,7 +17,7 @@ if not os.path.isfile(configfile):
 cfg = config.config(configfile)
 
 for arg in sys.argv[1:]: 
-    print "Sending file: ",arg
+    print("Sending file: ",arg)
 
-    print SendMail(cfg,"your file","your file",arg) 
+    print(SendMail(cfg,"your file","your file",arg)) 
     

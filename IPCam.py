@@ -12,9 +12,7 @@
 """Classes and methods for handling IPCam commands."""
 
 import sqlite3
-import Image
-import ImageFont
-import ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 import time,datetime
 import os
 from TTLib import *

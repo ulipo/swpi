@@ -12,13 +12,13 @@
 import sys
 import os
 import string
-import cStringIO
+import io
 import random
 import cgi
 import select
-import SimpleHTTPServer
-import Cookie
-import SocketServer
+import http.server
+import http.cookies
+import socketserver
 import threading
 import time
 #from TTLib import *
@@ -26,7 +26,7 @@ import datetime
 import config
 
 def log(message) :
-	print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+	print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 chars = string.ascii_letters + string.digits
 sessionDict = {} # dictionary mapping session id's to session objects
@@ -45,7 +45,7 @@ def generateRandom(length):
 class HTTP_REDIRECTION(Exception):
 	pass
 
-class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class ScriptRequestHandler(http.server.SimpleHTTPRequestHandler):
 	"""One instance of this class is created for each HTTP request"""
 
 	def do_GET(self):
@@ -59,7 +59,7 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 		if not self.path.split('?',1)[0] in _enabled_path and fileExtension != ".log" and fileExtension != ".s3db" and fileExtension != ".js" and fileExtension != ".png" and fileExtension != ".gif":
-			print "Access denied",self.path.split('?',1)[0]
+			print("Access denied",self.path.split('?',1)[0])
 			return
 		
 		self.body = {}
@@ -93,9 +93,9 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		#print "handle_data"
 		"""Process the data received"""
 		self.resp_headers = {"Content-type":'text/html'} # default
-		self.cookie=Cookie.SimpleCookie()
-		if self.headers.has_key('cookie'):
-			self.cookie=Cookie.SimpleCookie(self.headers.getheader("cookie"))
+		self.cookie=http.cookies.SimpleCookie()
+		if 'cookie' in self.headers:
+			self.cookie=http.cookies.SimpleCookie(self.headers.getheader("cookie"))
 		path = self.get_file() # return a file name or None
 		if os.path.isdir(path):
 			# list directory
@@ -125,9 +125,9 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		"""Send response, cookies, response headers 
 		and the data read from infile"""
 		self.send_response(code)
-		for morsel in self.cookie.values():
+		for morsel in list(self.cookie.values()):
 			self.send_header('Set-Cookie', morsel.output(header='').lstrip())
-		for (k,v) in self.resp_headers.items():
+		for (k,v) in list(self.resp_headers.items()):
 			self.send_header(k,v)
 		self.end_headers()
 		infile.seek(0)
@@ -158,21 +158,21 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		# redirect standard output so that the "print" statements 
 		# in the script will be sent to the web browser
 		SAVEOUT = sys.stdout
-		sys.stdout = cStringIO.StringIO()
+		sys.stdout = io.StringIO()
 
 		# build the namespace in which the script will be run
 		namespace = {'request':self.body, 'headers' : self.headers,
 			'resp_headers':self.resp_headers, 'Session':self.Session,
 			'HTTP_REDIRECTION':HTTP_REDIRECTION}
 		try:
-			execfile (script,namespace)
-		except HTTP_REDIRECTION,url:
+			exec(compile(open(script, "rb").read(), script, 'exec'),namespace)
+		except HTTP_REDIRECTION as url:
 			self.resp_headers['Location'] = url
-			self.done(301,cStringIO.StringIO())
+			self.done(301,io.StringIO())
 		except:
 			# print a traceback
 			# first reset the output stream
-			sys.stdout = cStringIO.StringIO()
+			sys.stdout = io.StringIO()
 			exc_type,exc_value,tb=sys.exc_info()
 			msg = exc_value.args[0]
 			if tb.tb_next is None:	 # errors (detected by the parser)
@@ -181,10 +181,10 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 			else:					  # exceptions
 				line = tb.tb_next.tb_lineno
 				text = open(script).readlines()[line-1]
-			print '%s in file %s : %s' %(exc_type.__name__,
-				os.path.basename(script), cgi.escape(msg))
-			print '<br>Line %s' %line
-			print '<br><pre><b>%s</b></pre>' %cgi.escape(text)
+			print('%s in file %s : %s' %(exc_type.__name__,
+				os.path.basename(script), cgi.escape(msg)))
+			print('<br>Line %s' %line)
+			print('<br><pre><b>%s</b></pre>' %cgi.escape(text))
 			sys.stdout = SAVEOUT
 		self.resp_headers['Content-length'] = sys.stdout.tell()
 		self.done(200,sys.stdout)
@@ -195,7 +195,7 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		introduced in Python 2.4"""
 
 		# values must be strings, not lists
-		dic = dict([ (k,v[0]) for k,v in self.body.items() ])
+		dic = dict([ (k,v[0]) for k,v in list(self.body.items()) ])
 		# first check if the string.Template class is available
 		if hasattr(string,"Template"): # Python 2.4 or above
 			try:
@@ -210,7 +210,7 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 			data = "Unable to handle this syntax for " + \
 				"string substitution. Python version must be 2.4 or above"
 		self.resp_headers['Content-length'] = len(data)
-		self.done(200,cStringIO.StringIO(data))
+		self.done(200,io.StringIO(data))
 
 	def Session(self):
 		"""Session management
@@ -220,7 +220,7 @@ class ScriptRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		Otherwise create a new SessionElement objet and generate a random
 		8-letters value sent back to the client as the value for a cookie
 		called sessionId"""
-		if self.cookie.has_key("sessionId"):
+		if "sessionId" in self.cookie:
 			sessionId=self.cookie["sessionId"].value
 		else:
 			sessionId=generateRandom(8)
@@ -239,7 +239,7 @@ class config_webserver(threading.Thread):
 
 	def run(self):
 		port = self.cfg.config_web_server_port
-		s=SocketServer.TCPServer(("",port),ScriptRequestHandler)
+		s=socketserver.TCPServer(("",port),ScriptRequestHandler)
 		log( "Config Server running on port %s" %port)
 		s.serve_forever()
 		

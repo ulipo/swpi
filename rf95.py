@@ -306,7 +306,7 @@ class RF95:
 
             # save RSSI
             self.last_rssi = self.spi_read(REG_1A_PKT_RSSI_VALUE) - 137
-            print 'self.last_rssi',self.last_rssi
+            print('self.last_rssi',self.last_rssi)
             # We have received a message
             self.rx_good = self.rx_good + 1
             self.rx_buf_valid = True
@@ -571,7 +571,7 @@ class RF95:
 # Example
 if __name__ == "__main__":
     if (len(sys.argv) != 2):
-        print "Usage: rf95.py [tx/rx]"
+        print("Usage: rf95.py [tx/rx]")
         exit()
         
     # Create rf95 object on port 0 with CS0 and  interrupt less mode. Use lora = RF95(0,0, 25,22)  for Interup on GPIO25 and reset on GPIO22
@@ -588,7 +588,7 @@ if __name__ == "__main__":
     lora.set_modem_config(Bw125Cr48Sf4096)        
         
     if ( sys.argv[1] == "tx" ):
-        print "Testing transmition ..."
+        print("Testing transmition ...")
        
         # Send  packets
         i = 0
@@ -597,13 +597,13 @@ if __name__ == "__main__":
             i = i + 1
             lora.send(lora.str_to_data(str_packet))
             lora.wait_packet_sent()
-            print("Sent packet: " + str_packet)
+            print(("Sent packet: " + str_packet))
             time.sleep(1)
             lora.set_mode_idle()
           
        
     elif ( sys.argv[1] == "rx" ):
-        print "Testing reception ..." 
+        print("Testing reception ...") 
        
         while (True):
             while not lora.available():
@@ -612,13 +612,13 @@ if __name__ == "__main__":
             str_packet = ""
             for ch in data:
                 str_packet = str_packet + chr(ch)
-            print 'RSSI: ' + str(lora.last_rssi) + ' Message: ' + str_packet
+            print('RSSI: ' + str(lora.last_rssi) + ' Message: ' + str_packet)
             lora.set_mode_idle()
 
            
         
     else:
-        print "Bad command .. exiting"
+        print("Bad command .. exiting")
         exit()   
     
     

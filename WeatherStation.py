@@ -231,7 +231,7 @@ def _decode(raw, format):
         return None
     if isinstance(format, dict):
         result = {}
-        for key, value in format.items():
+        for key, value in list(format.items()):
             result[key] = _decode(raw, value)
     else:
         pos, type, scale = format
@@ -816,8 +816,8 @@ if __name__ == '__main__':
     ws = weather_station()
  
 
-    print ws.get_fixed_block(['date_time'],True) , ws.current_pos()
+    print(ws.get_fixed_block(['date_time'],True) , ws.current_pos())
     
     for data, ptr, logged in ws.live_data():
-        print data
+        print(data)
     

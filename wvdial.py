@@ -8,7 +8,7 @@
 ##########################################################################
 
 import os
-import threading, Queue
+import threading, queue
 import select
 import subprocess
 import time
@@ -39,7 +39,7 @@ class WvDialProcess:
         #self.wvdial_pr = None
         self.info = { WvDialProcess.INFO_NETIF:None, WvDialProcess.INFO_LIPADDR:None, WvDialProcess.INFO_RIPADDR:None,
                                     WvDialProcess.INFO_PDNSADDR:None, WvDialProcess.INFO_SDNSADDR:None, WvDialProcess.INFO_CONNTIME:None }
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.lock = threading.Lock()
         self.thread = threading.Thread(target=self.execute)
 
@@ -144,25 +144,25 @@ if __name__ == '__main__':
         exit(1)    
     cfg = config.config(configfile)
   
-    print "connecting"
+    print("connecting")
     wvd_prc = WvDialProcess("wind.conf")
     wvd_prc.start()
    
     IP = wvd_prc.waitForIP()
-    print "IP",IP
+    print("IP",IP)
     
     time.sleep(20)
     
 
 
-    print "Disconnecting"
+    print("Disconnecting")
     
     wvd_prc.stop()
     
-    print "info=" , wvd_prc.info
+    print("info=" , wvd_prc.info)
 
     
     
  
 
-    print "Done"
+    print("Done")

@@ -24,7 +24,7 @@ import sensor_thread
 import sensor 
 import RPi.GPIO as GPIO
 import TTLib
-import thread
+import _thread
 from ctypes import *
 import spidev
 
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             v1 = ch1 * (3300.0/1024.0)
             temp = (v1 - 500.0) / 10.0
            
-        print "Speed:",speed,"Dir:",dir,"Temp;",temp
+        print("Speed:",speed,"Dir:",dir,"Temp;",temp)
 #        ss.GetData()
 #        log( "Meteo Data -  D : " + globalvars.meteo_data.wind_dir_code + " S : " + str(globalvars.meteo_data.wind_ave) +   + " G : " + str(globalvars.meteo_data.wind_gust) )
 #        #print logData("http://localhost/swpi_logger.php")

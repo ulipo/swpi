@@ -14,7 +14,7 @@
 
 import serial
 import threading
-import Queue
+import queue
 import time
 import os
 import errors
@@ -114,7 +114,7 @@ class Prober(object):
     """Class responsible for reading in and queueing of control data."""
 
     def __init__(self, modem):
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self._interpreter = None
         self._feeder = None
         self.modem = modem
@@ -257,9 +257,9 @@ class ConnectionStatus(object):
                    ('Downlink (B/s)', self.downlink),
                    ('Seconds uptime', self.link_uptime),
                    ('Mode', self.mode))
-        print
+        print()
         for item in mapping:
-            print format % item
+            print(format % item)
 
 
 class Modem(atc.SetCommands, atc.GetCommands, atc.ShowCommands,
@@ -438,18 +438,18 @@ class Modem(atc.SetCommands, atc.GetCommands, atc.ShowCommands,
                 data_port.open()
                 #log( "Opened")
                 data_port.write('ATZ\r\n')
-                print data_port.return_data()
+                print(data_port.return_data())
                 data_port.write('ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0\r\n')
-                print data_port.return_data()
+                print(data_port.return_data())
                 data_port.write('AT+CGDCONT=1,"IP","internet.wind",,\r\n')
-                print data_port.return_data()
+                print(data_port.return_data())
                 if not dialtone_check:
                     data_port.write('ATX3\r\n')
-                    print data_port.return_data()
+                    print(data_port.return_data())
                 data_port.write('ATDT%s\r\n' % self._dial_num)
-                print data_port.readline()
+                print(data_port.readline())
                 status = data_port.readline()
-                print status
+                print(status)
                 if status.startswith('CONNECT' )  :
 #                   pppd_args = [defaults.PPPD_PATH, self.baudrate, self.data_port.port] + self.pppd_params
                     pppd_args = [self.pppd_path, self.data_port.port ,self.baudrate ] + self.pppd_params							 
@@ -507,9 +507,9 @@ if __name__ == '__main__':
     cfg = config.config(configfile)
     
     modem = Modem(cfg.dongleDataPort,cfg.dongleAudioPort,cfg.dongleCtrlPort,cfg)
-    print modem
+    print(modem)
     
-    print ""
+    print("")
     log( "Modem Model : "  + modem.show_model())
     log(  "Revision : "  + modem.show_revision())
     log(  "Modem Serial Number : " + modem.show_sn())
@@ -521,7 +521,7 @@ if __name__ == '__main__':
     log( "Checking new sms messages...")
     smslist = modem.sms_list()
     for message in smslist:
-        print message
+        print(message)
     
     #modem.enable_textmode(True)
     modem.enable_clip(True)    

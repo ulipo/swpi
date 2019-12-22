@@ -10,7 +10,7 @@
 
 
 from bisect import bisect_left, bisect_right
-from itertools import izip
+
 
 class intervalmap(object):
     """
@@ -171,7 +171,7 @@ class intervalmap(object):
             in order.
         """
         previous_bound = None
-        for b,v in izip(self._bounds,self._items):
+        for b,v in zip(self._bounds,self._items):
             if v is not None:
                 yield (previous_bound,b), v
             previous_bound = b
@@ -191,7 +191,7 @@ class intervalmap(object):
 
     def __repr__(self):
         s = []
-        for b,v in self.items():
+        for b,v in list(self.items()):
             if v is not None:
                 s.append('[%r, %r] => %r'%(
                     b[0],
@@ -219,8 +219,8 @@ if __name__ == "__main__":
     assert repr(i) == "{[None, 3] => 'My,', [3, 5] => 'Hello', [5.5, 6] => 'Cruel', [6, 6.5] => 'And Harsh', [6.5, 7] => 'World', [8, 10] => '(Test)', [10, None] => '!'}"
     i[5.9:6.6] = None
     assert repr(i) == "{[None, 3] => 'My,', [3, 5] => 'Hello', [5.5, 5.9000000000000004] => 'Cruel', [6.5999999999999996, 7] => 'World', [8, 10] => '(Test)', [10, None] => '!'}"
-    assert ' '.join(i.values()) == "My, Hello Cruel World (Test) !"
-    print 'Test 1 OK'
+    assert ' '.join(list(i.values())) == "My, Hello Cruel World (Test) !"
+    print('Test 1 OK')
 
     # Test 2
     i = intervalmap()
@@ -241,13 +241,13 @@ if __name__ == "__main__":
     assert i[9] == 'L'
     assert i[15] == 'K'
     assert i[42] == 'J'
-    print 'Test 2 OK'
+    print('Test 2 OK')
 
     # Test 3
     try:
         from datetime import datetime
     except:
-        print 'Test 3 skipped'
+        print('Test 3 skipped')
     else:
         i = intervalmap()
         i[:datetime(2005,10,24)] = 'A'
@@ -262,12 +262,12 @@ if __name__ == "__main__":
         assert i[datetime(2005,11,29)] == None
         assert i[datetime(2005,11,30)] == 'C'
         assert i[datetime(2005,12,3)] == 'C'
-        print 'Test 3 OK'
+        print('Test 3 OK')
 
     try:
         import doctest
     except:
-        print 'Skipping the doctests'
+        print('Skipping the doctests')
     else:
-        print 'And now, the doctests'
+        print('And now, the doctests')
         doctest.testmod(optionflags=doctest.ELLIPSIS)

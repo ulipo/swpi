@@ -23,7 +23,7 @@ import sensor_thread
 import sensor 
 import RPi.GPIO as GPIO
 import TTLib
-import thread
+import _thread
 
 def getrevision():
     # Extract board revision from cpuinfo file
@@ -273,13 +273,13 @@ if __name__ == '__main__':
     while (1): 
         wind_dir, wind_dir_code, wind_int = ss.GetCurretWindDir()
         wind_speed = ss.GetCurretWindSpeed()
-        print "Speed:",wind_speed,"wind_dir:",wind_dir,"wind_dir_code:",wind_dir_code,"wind_int:",wind_int
+        print("Speed:",wind_speed,"wind_dir:",wind_dir,"wind_dir_code:",wind_dir_code,"wind_int:",wind_int)
 
     __PIN_A = 23  #Anemometer
     __PIN_B1 = 17 
     
     myrevision = getrevision()
-    print "revision: " + myrevision
+    print("revision: " + myrevision)
     if myrevision == "0002" or myrevision == "0003" :
         __PIN_B2 = 21
     else:
@@ -313,7 +313,7 @@ if __name__ == '__main__':
             v1 = ch1 * (3300.0/1024.0)
             temp = (v1 - 500.0) / 10.0
            
-        print "Speed:",speed,"Dir:",dir,"Temp;",temp
+        print("Speed:",speed,"Dir:",dir,"Temp;",temp)
                 
 #        ss.GetData()
 #        log( "Meteo Data -  D : " + globalvars.meteo_data.wind_dir_code + " S : " + str(globalvars.meteo_data.wind_ave) +   + " G : " + str(globalvars.meteo_data.wind_gust) )

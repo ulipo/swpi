@@ -33,7 +33,7 @@ import serial
 
 
 def log(message) :
-	print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+	print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 windDirMap = { 0:"N", 1:"NNE", 2:"NE", 3:"ENE", 4:"E", 5:"ESE", 6:"SE", 7:"SSE",
 			  8:"S", 9:"SSW", 10:"SW", 11:"WSW", 12:"W", 13:"WNW", 14:"NW", 15:"NWN" }
@@ -90,9 +90,9 @@ class Sensor_WS2300(sensor.Sensor):
 				
 				data = [ m.conv.binary2value(d) for m, d in zip(measures, raw_data)]
 	
-				print "***************DUBUG********************"
-				print data
-				print "***************DUBUG********************"
+				print("***************DUBUG********************")
+				print(data)
+				print("***************DUBUG********************")
 
 				globalvars.meteo_data.status = 0
 				globalvars.meteo_data.last_measure_time = datetime.datetime.now()
@@ -120,8 +120,8 @@ class Sensor_WS2300(sensor.Sensor):
 				sensor.Sensor.GetData(self)				 
 
 					
-			except Exception, err:
-				print sys.exc_info()[0]
+			except Exception as err:
+				print(sys.exc_info()[0])
 				log("ERROR with WS2300  %s "  % err)
 				
 		serialPort.close()

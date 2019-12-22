@@ -26,13 +26,13 @@ import sensor_thread
 import sensor
 import RPi.GPIO as GPIO
 import TTLib
-import thread
+import _thread
 import os
 import json
 DEBUG = False
 
 def log(message):
-    print datetime.datetime.now().strftime('[%d/%m/%Y-%H:%M:%S]'), message
+    print(datetime.datetime.now().strftime('[%d/%m/%Y-%H:%M:%S]'), message)
 
 
 def modification_date(filename):
@@ -148,7 +148,7 @@ class Sensor_WH3080RTLSDR(sensor.Sensor):
 
                 elif str(line['msg_type']) == '1':
                     if str(self.cfg.rtlsdr_timesync) == 'True':
-                        print '\n'
+                        print('\n')
                         log('Setting system time...')
                         try:
                             t_year = str(line['year'])
@@ -223,11 +223,11 @@ class Sensor_WH3080RTLSDR(sensor.Sensor):
         good_data = False
         while not os.path.exists('/dev/shm/wh1080-rtl_433.txt'):
             if DEBUG:
-                print 'DEBUG - /dev/shm/wh1080-rtl_433.txt does not exist.'
+                print('DEBUG - /dev/shm/wh1080-rtl_433.txt does not exist.')
             time.sleep(5)
-	while not os.path.exists('/dev/shm/wh1080-rtl_433.txt'):
+        while not os.path.exists('/dev/shm/wh1080-rtl_433.txt'):
             if DEBUG:
-                print 'DEBUG - /dev/shm/wh3080-rtl_433.txt does not exist.'
+                print('DEBUG - /dev/shm/wh3080-rtl_433.txt does not exist.')
             time.sleep(5)
 
         while not good_data:
@@ -260,7 +260,7 @@ class Sensor_WH3080RTLSDR(sensor.Sensor):
                 sensor.Sensor.GetData(self)
             tosleep = 50 - (datetime.datetime.now() - last_data_time).seconds
             if DEBUG:
-                print 'Sleeping  ', tosleep
+                print('Sleeping  ', tosleep)
             if tosleep > 0 and tosleep < 50:
                 time.sleep(tosleep)
             else:
@@ -280,7 +280,7 @@ class Sensor_WH3080RTLSDR(sensor.Sensor):
                 log('Sleeping while waiting for weather data...')
                 tosleep = 50 - (datetime.datetime.now() - last_data_time).seconds
                 if DEBUG:
-                    print 'Sleeping  ', tosleep
+                    print('Sleeping  ', tosleep)
                 if tosleep > 0 and tosleep < 50:
                     time.sleep(tosleep)
                 else:

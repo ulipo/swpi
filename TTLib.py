@@ -8,30 +8,28 @@
 ##########################################################################
 #                      Generic function Library
 import ftplib
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import os
 import datetime
 import socket
-import Image
-import ImageFont
-import ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 import time
 import datetime
 import config    
 import globalvars
 import smtplib
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEBase import MIMEBase
-from email.MIMEText import MIMEText
-from email import Encoders
-import urllib,urllib2
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email import encoders
+import urllib.request, urllib.parse, urllib.error,urllib.request,urllib.error,urllib.parse
 import cmath ,math
 import json
 import tempfile    
 #import sensor_simulator
 import ntplib
 import tarfile
-import thread
+import _thread
 import os
 import requests
 import subprocess
@@ -111,7 +109,7 @@ def linreg(X, Y):
 
 class RingBuffer(object):
     def __init__(self, size):
-        self.data = [None for i in xrange(size)]
+        self.data = [None for i in range(size)]
 
     def append(self, x):
         self.data.pop(0)
@@ -162,7 +160,7 @@ class RingBuffer(object):
     def getTrend(self):
         if self.get()[0] == None:
             return None
-        reg = linreg(range(len(self.get())),self.get())
+        reg = linreg(list(range(len(self.get()))),self.get())
         #print self.get()
         #print reg
         if ( reg != None):
@@ -190,7 +188,7 @@ def swpi_update():
 
 def swpi_update_old():
     url = ' http://www.vololiberomontecucco.it/swpi/swpi-src.tar.gz'
-    urllib.urlretrieve(url,filename='swpi-src.tar.gz')
+    urllib.request.urlretrieve(url,filename='swpi-src.tar.gz')
     t = tarfile.open('swpi-src.tar.gz', 'r:gz')
     t.extractall('../')  
     os.remove("swpi-src.tar.gz")
@@ -812,7 +810,7 @@ def getLoRaBWCode(c):
                 "250"   : 0x80,       
                 "500"   : 0x90        
                 }
-    if ( c in options.keys()):
+    if ( c in list(options.keys())):
         return options[c]
     else:
         return 0x70
@@ -824,7 +822,7 @@ def getLoRaCRCode(c):
                "4/7"  : 0x06,
                "4/8"  : 0x08
                 }
-    if ( c in options.keys()):
+    if ( c in list(options.keys())):
         return options[c]
     else:
         return 0x02
@@ -839,7 +837,7 @@ def getLoRaSFCode(c):
                 "11"  : 0xb0,
                 "12"  : 0xc0
                 }
-    if ( c in options.keys()):
+    if ( c in list(options.keys())):
         return options[c]
     else:
         return 0x70
@@ -924,7 +922,7 @@ def waitForCameraCapture():
 
 
 def log(message) :
-    print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+    print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 def getFileName(path):
     return os.path.basename(path)
@@ -1097,7 +1095,7 @@ def sendFileToFTPServer(filename,name,server,destFolder,login,password,delete):
             msg = msg + " Deleted"
         log(msg)
         return True
-    except Exception, err:
+    except Exception as err:
         #print "Exception"
         #print '%s' % str(err)    
         log("Error sending  file to server : " + name)
@@ -1109,7 +1107,7 @@ def sendFileToServer(filename,name,server,destFolder,login,password,delete,useth
     if ( not usethread ):
         sendFileToFTPServer(filename,name,server,destFolder,login,password,delete)
     else:
-        thread.start_new_thread(sendFileToFTPServer, (filename,name,server,destFolder,login,password,delete))
+        _thread.start_new_thread(sendFileToFTPServer, (filename,name,server,destFolder,login,password,delete))
 
 
 def internet_on():
@@ -1140,20 +1138,20 @@ def systemRestart():
         log("Rebooting system ..")
         os.system("sudo reboot")
     else:
-        print " Sorry, cannot reboot Windows"
+        print(" Sorry, cannot reboot Windows")
         
 def systemHalt():
     if os.name != 'nt':
         log("Halting system ..")
         os.system("sudo halt")
     else:
-        print " Sorry, cannot reboot Windows"        
+        print(" Sorry, cannot reboot Windows")        
 
 def getIP():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(("gmail.com", 80)) 
-    except Exception, e:
+    except Exception as e:
         #log("something wrong in get IP. Exception type is %s" % ( e))
         return None
     ip = (s.getsockname()[0])
@@ -1163,11 +1161,11 @@ def getIP():
 
 def getPublicIP():
     try:
-	ip = requests.get("http://myexternalip.com/raw",timeout=10).text
+	    ip = requests.get("http://myexternalip.com/raw",timeout=10).text
         #ip = requests.get("http://www.vololiberomontecucco.it/ip.php",timeout=10).text
         #ip = urllib.urlopen("http://www.vololiberomontecucco.it/ip.php").read()
-	return ip
-    except Exception, e:
+	    return ip
+    except Exception as e:
         return None    
 
 def waitForIP():
@@ -1223,7 +1221,7 @@ def SendMail(cfg, subject, text, attach):
         return True
     except Exception as e:
         log ("ERROR sending mail" )
-        print "Exeption", e
+        print("Exeption", e)
         return False
     
 
@@ -1270,7 +1268,7 @@ def getCurrentMeteoData():
 
 def getCurrentMeteoDataFromUrl(url):
     try:
-        data = urllib2.urlopen(url)
+        data = urllib.request.urlopen(url)
         return json.load(data)
     except Exception as e:
         log ("ERROR getCurrentMeteoDataFromUrl" )
@@ -1286,7 +1284,7 @@ if __name__ == '__main__':
     cfg = config.config(configfile)
     
     
-    print logDataToCWOP(cfg)
+    print(logDataToCWOP(cfg))
     
     
     

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import smtplib
 import config
 import sys
@@ -9,7 +9,7 @@ import datetime
 from datetime import datetime
 import humod
 import subprocess, signal
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import socket
 import filecmp
 import logging
@@ -117,7 +117,7 @@ def checkswpi():
             return True
         else:
             return False
-    except Exception, e:
+    except Exception as e:
             return False
 
 
@@ -146,8 +146,8 @@ def leggifile(nomefile):
 def internet():
 	try:
 		logger.debug('check internet')
-		urllib2.urlopen("http://www.google.com").close()
-	except urllib2.URLError:
+		urllib.request.urlopen("http://www.google.com").close()
+	except urllib.error.URLError:
 		return False
 	else:
 		return True
@@ -209,10 +209,10 @@ def trovaip():
 	s.close()
 def getPublicIP():
 	try:
-		ip = urllib2.urlopen('http://ip.42.pl/raw').read()
+		ip = urllib.request.urlopen('http://ip.42.pl/raw').read()
 		logger.debug('find ip public '+ip)		
 		return ip
-	except Exception, e:
+	except Exception as e:
 		return ""
 	
 def controlloswpi():

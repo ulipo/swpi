@@ -15,7 +15,7 @@ import string
 
 so = Session()
 if not hasattr(so,'loggedin'):
-    raise HTTP_REDIRECTION,"index.html"
+    raise HTTP_REDIRECTION("index.html")
 
 
 filecontent = request['file'][0]
@@ -26,7 +26,7 @@ f = open("swpi.cfg", "w")
 f.write(filecontent)
 f.close()
 
-raise HTTP_REDIRECTION,"swpi_webconfig.py"
+raise HTTP_REDIRECTION("swpi_webconfig.py")
 
 # A nested FieldStorage instance holds the file
 #fileitem = form['file']

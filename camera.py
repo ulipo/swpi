@@ -9,9 +9,7 @@
 """Classes and methods for handling  Cameras commands."""
 
 import sqlite3
-import Image
-import ImageFont
-import ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 import time,datetime
 import os
 from TTLib import *
@@ -40,7 +38,7 @@ class CameraWatchDogClass(threading.Thread):
 				log("CameraWatchDog: System will Reboot " )
 				systemRestart()
 			else:
-				print "self.resetted = False"
+				print("self.resetted = False")
 				self.resetted = False
 				
 	def reset(self):
@@ -109,7 +107,7 @@ class PhotoCamera(object):
 		(stdout, stderr) = p.communicate()
 		ret = []
 		lineNumber = 0;
-		for line in stdout.split('\n') :
+		for line in stdout.decode().split('\n') :
 			lineNumber = lineNumber + 1
 			if not line or lineNumber <= 2 : 
 				continue

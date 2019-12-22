@@ -29,9 +29,10 @@ import logging
 import platform
 import datetime
 import serial
+from functools import reduce
 
 def log(message) :
-    print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+    print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 class Sensor_WMR918(sensor.Sensor):
     '''
@@ -60,7 +61,7 @@ class Sensor_WMR918(sensor.Sensor):
         
     
     def _list2bytes(self, d):
-        return reduce(lambda a, b: a + b, map(lambda a: "%02X " % a, d))
+        return reduce(lambda a, b: a + b, ["%02X " % a for a in d])
 
     def _decode_bcd(self, bcd):
         return(bcd & 0xf) + ((bcd & 0xf0) >> 4) * 10
@@ -127,7 +128,7 @@ class Sensor_WMR918(sensor.Sensor):
                     pass
             else:
                 # data received and added to input buffer
-                n_buffer = map(lambda x: ord(x), buffer)
+                n_buffer = [ord(x) for x in buffer]
                 log("Serial RAW DATA: %s" % self._list2bytes(n_buffer))
                 input_buffer += n_buffer
 

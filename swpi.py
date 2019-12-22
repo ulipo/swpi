@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ###########################################################################
 #     Sint Wind PI
@@ -18,7 +18,7 @@ import humod
 import config
 import webcam
 import sys
-import urllib2, urllib
+import urllib.request, urllib.error, urllib.parse, urllib.request, urllib.parse, urllib.error
 import datetime
 import camera
 from TTLib import *
@@ -32,7 +32,7 @@ import math
 import service
 import tarfile
 import signal
-import thread
+import _thread
 import database
 import web_server
 import socket
@@ -108,7 +108,7 @@ def process_sms(modem, smsID):
 				bFound = True
 				break
 		if ( not bFound ):
-			print "ERROR - SMS not found"
+			print("ERROR - SMS not found")
 			return();
 		
 		msgText =  modem.sms_read(msgID)
@@ -571,7 +571,7 @@ def process_sms(modem, smsID):
 			log( "SWPI-UPDATE" )
 			systemRestart()
 		else:
-			print "Unknown command"
+			print("Unknown command")
 		#----------------------------------------------------------------------------	
 		
 		if conn:
@@ -588,8 +588,8 @@ def process_sms(modem, smsID):
 		reset_sms(modem)	
 		if conn:
 			conn.close()
-		print e.message
-		print e.__class__.__name__
+		print(e.message)
+		print(e.__class__.__name__)
 		log(traceback.format_exc())
 		return False
 		
@@ -848,13 +848,13 @@ else:
 v = version.Version("VERSION").getVersion()
 log( "Starting SINT WIND PI  ... ")
 ############################ MAIN ###############################################
-print "************************************************************************"
-print "*                      Sint Wind PI "+v+"                           *"
-print "*                                                                      *"
-print "*          2012-2018 by Tonino Tarsi  <tony.tarsi@gmail.com>           *"
-print "*                                                                      *"
-print "*     System will start in 10 seconds - Press Ctrl-C to cancel         *"
-print "************************************************************************"
+print("************************************************************************")
+print("*                      Sint Wind PI "+v+"                           *")
+print("*                                                                      *")
+print("*          2012-2018 by Tonino Tarsi  <tony.tarsi@gmail.com>           *")
+print("*                                                                      *")
+print("*     System will start in 10 seconds - Press Ctrl-C to cancel         *")
+print("************************************************************************")
 # Get curret log file
 globalvars.TimeSetFromNTP = False
 globalvars.logFileDate = datetime.datetime.now().strftime("%d%m%Y")
@@ -869,7 +869,7 @@ try:
 			sys.stdout.write(str(SecondsToWait-i) + ".....")
 			sys.stdout.flush()
 			time.sleep(1)
-		print ""
+		print("")
 except KeyboardInterrupt:
 	#print  "Stopping swpi"
 	exit(0)
@@ -955,7 +955,7 @@ if ( cfg.config_web_server ):
 
 # Set Time from NTP ( using a thread to avoid strange freezing )
 if ( cfg.set_system_time_from_ntp_server_at_startup ):
-	thread.start_new_thread(SetTimeFromNTP, (cfg.ntp_server,)) 
+	_thread.start_new_thread(SetTimeFromNTP, (cfg.ntp_server,)) 
 
 # Init Dongle
 bConnected = False
@@ -981,7 +981,7 @@ if cfg.usedongle  :
 		reset_sms(modem)
 	
 		
-		print ""
+		print("")
 		log( "Modem Model : "  + modem.show_model())
 		log(  "Revision : "  + modem.show_revision())
 		log(  "Modem Serial Number : " + modem.show_sn())
@@ -1030,7 +1030,7 @@ if ( cfg.set_time_at_boot.upper() != "NONE"):
 	if os.path.exists(date_file):
 		in_file = open(date_file,"r")
 		text = in_file.readline().split("\n")[0]
-		print text
+		print(text)
 		in_file.close()
 		now = datetime.datetime.strptime(text, "%Y-%m-%d")
 	else:
@@ -1048,7 +1048,7 @@ if ( cfg.set_time_at_boot.upper() != "NONE"):
 	
 # Set Time from NTP ( using a thread to avoid strange freezing )
 if ( cfg.set_system_time_from_ntp_server_at_startup ):
-	thread.start_new_thread(SetTimeFromNTP, (cfg.ntp_server,)) 
+	_thread.start_new_thread(SetTimeFromNTP, (cfg.ntp_server,)) 
 
 # Send mail with IP information ( using a thread to avoid strange freezing )
 try:
@@ -1056,7 +1056,7 @@ try:
 except:
 	pass
 if ( publicIP != None and cfg.use_mail and cfg.mail_ip ):
-	thread.start_new_thread(SendMail,(cfg, cfg.station_name + " - My IP has changed","Local IP :" + IP + " Public IP : " + publicIP,"")) 
+	_thread.start_new_thread(SendMail,(cfg, cfg.station_name + " - My IP has changed","Local IP :" + IP + " Public IP : " + publicIP,"")) 
 	
 if ( publicIP != None and cfg.use_DNSExit) :
 	DNSExit(cfg.DNSExit_uname,cfg.DNSExit_pwd,cfg.DNSExit_hname)
@@ -1308,7 +1308,7 @@ while 1:
 				
 				# Set Time from NTP ( using a thread to avoid strange freezing )
 				if ( cfg.set_system_time_from_ntp_server_at_startup ):
-					thread.start_new_thread(SetTimeFromNTP, (cfg.ntp_server,)) 
+					_thread.start_new_thread(SetTimeFromNTP, (cfg.ntp_server,)) 
 				
 				if bConnected:
 					log("Try to disconnect")
@@ -1322,11 +1322,11 @@ while 1:
 			
 		#check if all threads are alive
 		if cfg.useradio:
-			if ( not radio.isAlive()):
+			if ( not radio.is_alive()):
 				log("Error : Something wrong with radio .. restarting")
 				systemRestart()
 		if cfg.use_wind_sensor:
-			if ( not wind_sensor_thread.isAlive()):
+			if ( not wind_sensor_thread.is_alive()):
 				log("Error : Something wrong with sensors .. restarting ws")
 				systemRestart()		
 			
@@ -1389,9 +1389,9 @@ while 1:
 		wind_sensor_thread.stop()
 		exit(0)
 	
-	except Exception,e:
-		print e.message
-		print e.__class__.__name__
+	except Exception as e:
+		print(e.message)
+		print(e.__class__.__name__)
 		traceback.print_exc(e)
 			
 	

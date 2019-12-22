@@ -28,7 +28,7 @@ def playsound(soundfile):
     time.sleep(1)
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
-        print "Playing", pygame.mixer.music.get_pos()
+        print("Playing", pygame.mixer.music.get_pos())
         time.sleep(0.020)
 
 
@@ -300,4 +300,4 @@ if __name__ == '__main__':
     radio.start()
 
           
-    print "Done"
+    print("Done")

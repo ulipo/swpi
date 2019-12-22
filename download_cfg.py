@@ -16,11 +16,11 @@ so = Session()
 
 
 if not hasattr(so,'loggedin'):
-    raise HTTP_REDIRECTION,"index.html"
+    raise HTTP_REDIRECTION("index.html")
 #else:
 #    if ( not so['loggedin'] ):
 #        raise HTTP_REDIRECTION,"index.html"    
 #    
 
-raise HTTP_REDIRECTION,"swpi.cfg"
+raise HTTP_REDIRECTION("swpi.cfg")
 

@@ -18,7 +18,7 @@ import sys
 import subprocess
 import sys 
 import os
-import thread
+import _thread as thread
 import time,datetime
 
 import globalvars

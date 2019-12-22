@@ -23,7 +23,7 @@ so.password = request['password'][0]
 if ( so.user.upper() == "ADMIN" and so.password == cfg.SMSPwd ):
 	# redirect to the home page
 	so.loggedin = True
-	raise HTTP_REDIRECTION,"swpi_webconfig.py"
+	raise HTTP_REDIRECTION("swpi_webconfig.py")
 else:
-	raise HTTP_REDIRECTION,"index.html"
+	raise HTTP_REDIRECTION("index.html")
 

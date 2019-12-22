@@ -28,11 +28,12 @@ from TTLib import *
 import logging
 import platform
 import datetime
+from functools import reduce
 
 
 
 def log(message) :
-    print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+    print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
     
 forecastMap = { 0:'PartlyCloudy', 1:'Rainy', 2:'Cloudy', 3:'Sunny', 4:'Snowy' }
@@ -74,12 +75,12 @@ class Sensor_WMR100(sensor.Sensor):
     name = "Oregon Scientific WMR100"
 
     def _list2bytes(self, d):
-        return reduce(lambda a, b: a + b, map(lambda a: "%02X " % a, d))
+        return reduce(lambda a, b: a + b, ["%02X " % a for a in d])
 
     def _search_device(self, vendor_id, product_id):
         try:
             import usb
-        except Exception, e:
+        except Exception as e:
             self.logger.warning(e)
             return None
         for bus in usb.busses():
@@ -126,7 +127,7 @@ class Sensor_WMR100(sensor.Sensor):
                 log("USB WMR100 initialized")
                 self._run(devh)
 
-            except Exception, e:
+            except Exception as e:
                 self.logger.exception("WMR100 exception: %s" % str(e))
 
             self.logger.critical("USB WMR100 connection failure")
@@ -155,7 +156,7 @@ class Sensor_WMR100(sensor.Sensor):
                                                 0x0000008,            # bytes to read
                                                 15000)                # timeout (15 seconds)
                     errors = 0
-                except usb.USBError, e:
+                except usb.USBError as e:
                     if e.args == ('No error',):
                         self.logger.debug('USBError("No error") exception received. Ignoring...(http://bugs.debian.org/476796)')
                         packet = None
@@ -166,7 +167,7 @@ class Sensor_WMR100(sensor.Sensor):
                         time.sleep(1)                        
                     else:
                         raise e
-            except Exception, e:
+            except Exception as e:
                 self.logger.exception("Exception reading interrupt: "+ str(e))
                 errors = errors + 1
                 packet = None  ## error in this packet, we do not want it

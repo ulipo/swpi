@@ -76,7 +76,7 @@ if __name__ == '__main__':
     while ( 1 ) :
         ss.GetData()
         
-        print logData("http://localhost/swpi_logger.php")
+        print(logData("http://localhost/swpi_logger.php"))
         time.sleep(0.2)
     
     

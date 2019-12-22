@@ -233,13 +233,13 @@ def outputPage(cfg):
 
 	html = html_template.safe_substitute(d)
 
-	print html
+	print(html)
 
 so = Session()
 
 
 if not hasattr(so,'loggedin'):
-	raise HTTP_REDIRECTION,"index.html"
+	raise HTTP_REDIRECTION("index.html")
 #else:
 #	if ( not so['loggedin'] ):
 #		raise HTTP_REDIRECTION,"index.html"	

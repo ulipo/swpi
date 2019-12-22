@@ -15,9 +15,9 @@ import os
 
 so = Session()
 if not hasattr(so,'loggedin'):
-    raise HTTP_REDIRECTION,"index.html"
+    raise HTTP_REDIRECTION("index.html")
 
-if 'update' in request.keys():
+if 'update' in list(request.keys()):
     update = request['update'][0]
 else:
     update = "1"
@@ -90,9 +90,9 @@ if ( os.path.isfile(filetoadd) ) :
 
     html = html_template.safe_substitute(d)
 
-    print html
+    print(html)
 else:
-    print "log file not found"
+    print("log file not found")
 
 
 

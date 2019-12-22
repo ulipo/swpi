@@ -10,4 +10,4 @@ cam = camera.PhotoCamera(cfg)
 
 cam.reset_camera()
 
-print "Camera reset"
+print("Camera reset")

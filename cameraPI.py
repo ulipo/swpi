@@ -9,9 +9,7 @@
 """Classes and methods for handling cameraPI commands."""
 
 import sqlite3
-import Image
-import ImageFont
-import ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 import time
 import os
 from TTLib  import *

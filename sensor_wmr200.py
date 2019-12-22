@@ -28,9 +28,10 @@ from TTLib import *
 import logging
 import platform
 import datetime
+from functools import reduce
 
 def log(message) :
-    print datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message
+    print(datetime.datetime.now().strftime("[%d/%m/%Y-%H:%M:%S]") , message)
 
 windDirMap = { 0:"N", 1:"NNE", 2:"NE", 3:"ENE",
                4:"E", 5:"ESE", 6:"SE", 7:"SSE",
@@ -111,12 +112,12 @@ class Sensor_WMR200(sensor.Sensor):
       self.connectDevice(silent_fail=True)
 
     def _list2bytes(self, d):
-        return reduce(lambda a, b: a + b, map(lambda a: "%02X " % a, d))
+        return reduce(lambda a, b: a + b, ["%02X " % a for a in d])
 
     def searchDevice(self, vendorId, productId):
       try:
         import usb
-      except Exception, e:
+      except Exception as e:
         self.logger.warning(e)
         return None
       busses = usb.busses()
@@ -166,7 +167,7 @@ class Sensor_WMR200(sensor.Sensor):
             self.logger.debug("Packet: %s" % self._list2bytes(packet))
             return packet
 
-        except usb.USBError, e:
+        except usb.USBError as e:
           self.logger.debug("Exception reading interrupt: "+ str(e))
           return None
 
@@ -176,7 +177,7 @@ class Sensor_WMR200(sensor.Sensor):
         self.devh.controlMsg(usb.TYPE_CLASS + usb.RECIP_INTERFACE,
                              0x9, packet, 0x200,
                              timeout = int(usbTimeout * 1000))
-      except usb.USBError, e:
+      except usb.USBError as e:
         if e.args != ('No error',):
           self.logger.exception("Can't write request record: "+ str(e))
 
@@ -222,7 +223,7 @@ class Sensor_WMR200(sensor.Sensor):
           self.devh.detachKernelDriver(self.usbInterface.interfaceNumber)
           self.logger.info("Unloaded other driver from interface %d" %
               self.usbInterface.interfaceNumber)
-        except usb.USBError, e:
+        except usb.USBError as e:
           pass
 
         # The following init sequence was adapted from Denis Ducret's
@@ -278,7 +279,7 @@ class Sensor_WMR200(sensor.Sensor):
         self.logger.info("USB connection established")
 
         return self.devh
-      except usb.USBError, e:
+      except usb.USBError as e:
         if silent_fail:
            self.logger.debug("WMR200 connect failed: %s" % str(e))
         else:
@@ -301,7 +302,7 @@ class Sensor_WMR200(sensor.Sensor):
           None
         self.logger.info("USB connection closed")
         time.sleep(usbTimeout)
-      except usb.USBError, e:
+      except usb.USBError as e:
         self.logger.exception("WMR200 disconnect failed: %s" % str(e))
       self.devh = None
 
@@ -325,7 +326,7 @@ class Sensor_WMR200(sensor.Sensor):
           if self.devh == None:
             self.connectDevice()
           self.logData()
-        except WMR200Error, e:
+        except WMR200Error as e:
           self.logger.error("Re-syncing USB connection")
         self.disconnectDevice()
 
@@ -608,7 +609,7 @@ class Sensor_WMR200(sensor.Sensor):
       # multiple sensors. But historic data bundles data for multiple
       # sensors.
       rSize = 7
-      for i in xrange(len(record) / rSize):
+      for i in range(len(record) / rSize):
         # Byte 0: low nibble contains sensor ID. 0 for base station.
         sensor = record[i * rSize] & 0xF
         tempTrend = (record[i * rSize] >> 6) & 0x3
@@ -737,7 +738,7 @@ class Sensor_WMR200(sensor.Sensor):
                        (self.durationToStr(resyncTime),
                         resyncTime * 100.0 / uptime))
       if self.frames > 0:
-        for i in xrange(9):
+        for i in range(9):
           self.logger.info("0x%X records: %8d (%2d%%)" %
                            (0xD1 + i, self.recordCounters[i],
                             self.recordCounters[i] * 100.0 / self.frames))
